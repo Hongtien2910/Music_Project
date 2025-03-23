@@ -22,13 +22,13 @@ def cut_mp3(input_file, output_file, start_time=72, duration=10):
 
         # Xuất file MP3 mới
         segment.export(output_file, format="mp3")
-        print(f"✅ Đã cắt thành công {duration} giây từ {start_time}s → {start_time + duration}s.")
-        print(f"📂 File MP3 mới: {output_file}")
+        print(f"Đã cắt thành công {duration} giây từ {start_time}s → {start_time + duration}s.")
+        print(f"File MP3 mới: {output_file}")
 
     except Exception as e:
-        print(f"❌ Lỗi: {e}")
+        print(f"Lỗi: {e}")
 
 # Gọi hàm để cắt file
-input_mp3 = "mp3/How_long.mp3"  # File MP3 gốc
-output_mp3 = "output2.mp3"  # File đầu ra
-cut_mp3(input_mp3, output_mp3, start_time=60, duration=10)
+input_mp3 = "mp3/Halsey - Without Me.mp3"  # File MP3 gốc
+output_mp3 = "output3.mp3"  # File đầu ra
+cut_mp3(input_mp3, output_mp3, start_time=80, duration=20)

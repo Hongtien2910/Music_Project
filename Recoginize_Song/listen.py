@@ -11,144 +11,156 @@ from src.listener import Listener
 from src.db import SQLiteDatabase
 
 if __name__ == '__main__':
-  db = SQLiteDatabase()
+    db = SQLiteDatabase()
 
-  parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
-  parser.add_argument('-s', '--seconds', nargs='?')
-  args = parser.parse_args()
+    # Thiết lập parser để nhận tham số dòng lệnh
+    parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
+    parser.add_argument('-s', '--seconds', nargs='?')  # Nhận tham số thời gian ghi âm
+    args = parser.parse_args()
 
-  if not args.seconds:
-    print (colored("Warning: You don't set any second. It's 10 by default", "yellow"))
-    args.seconds = "10"
+    # Kiểm tra nếu không có giá trị thời gian, mặc định là 10 giây
+    if not args.seconds:
+        print(colored("Warning: You don't set any second. It's 10 by default", "yellow"))
+        args.seconds = "10"
 
-  seconds = int(args.seconds)
+    seconds = int(args.seconds)  # Chuyển đổi thời gian từ chuỗi sang số nguyên
 
-  chunksize = 2**12
-  channels = 1
+    # Thiết lập các thông số cho quá trình ghi âm
+    chunksize = 2**12  # Kích thước mỗi khối dữ liệu
+    channels = 1  # Ghi âm chỉ 1 kênh (mono)
 
-  record_forever = False
+    record_forever = False  # Chỉ ghi âm một lần, không lặp lại
 
-  listener = Listener()
+    # Khởi tạo đối tượng Listener để ghi âm
+    listener = Listener()
 
-  listener.start_recording(seconds=seconds,
-    chunksize=chunksize,
-    channels=channels)
+    # Bắt đầu ghi âm với các thông số đã thiết lập
+    listener.start_recording(
+        seconds=seconds,
+        chunksize=chunksize,
+        channels=channels
+    )
 
-  while True:
-    bufferSize = int(listener.rate / listener.chunksize * seconds)
-    print (colored("Listening....","green"))
+    # Ghi âm và xử lý dữ liệu âm thanh
+    while True:
+        bufferSize = int(listener.rate / listener.chunksize * seconds)
+        print(colored("Listening....", "green"))
 
-    for i in range(0, bufferSize):
-      nums = listener.process_recording()
+        # Xử lý từng khối dữ liệu âm thanh
+        for i in range(0, bufferSize):
+            nums = listener.process_recording()
 
-    if not record_forever: break
+        if not record_forever:
+            break
 
-  listener.stop_recording()
+    # Dừng ghi âm
+    listener.stop_recording()
 
-  print (colored('Okey, enough', attrs=['dark']))
+    print(colored('Okey, enough', attrs=['dark']))
 
-  def grouper(iterable, n, fillvalue=None):
-    args = [iter(iterable)] * n
-    return (filter(None, values) for values
-            in zip_longest(fillvalue=fillvalue, *args))
+    # Hàm nhóm các phần tử trong danh sách theo từng nhóm có kích thước n
+    def grouper(iterable, n, fillvalue=None):
+        args = [iter(iterable)] * n
+        return (filter(None, values) for values in zip_longest(fillvalue=fillvalue, *args))
 
-  data = listener.get_recorded_data()
+    # Lấy dữ liệu âm thanh đã ghi
+    data = listener.get_recorded_data()
 
-  msg = 'Took %d samples'
-  print(colored(msg, attrs=['dark']) % len(data[0]))
+    print(colored(f"Took {len(data[0])} samples", attrs=['dark']))
 
-  Fs = analyzer.DEFAULT_FS
-  channel_amount = len(data)
+    # Cấu hình thông số tần số lấy mẫu
+    Fs = analyzer.DEFAULT_FS
+    channel_amount = len(data)  # Số lượng kênh âm thanh
 
-  result = set()
-  matches = []
+    result = set()
+    matches = []
 
-  def find_matches(samples, Fs=analyzer.DEFAULT_FS):
-    hashes = analyzer.fingerprint(samples, Fs=Fs)
-    return return_matches(hashes)
+    # Hàm tìm kiếm các mẫu âm thanh phù hợp từ dữ liệu đã ghi
+    def find_matches(samples, Fs=analyzer.DEFAULT_FS):
+        hashes = analyzer.fingerprint(samples, Fs=Fs)  # Chuyển âm thanh thành các dấu vân tay
+        return return_matches(hashes)  # Tìm kiếm các mẫu khớp trong CSDL
 
-  def return_matches(hashes):
-    mapper = {}
-    for hash, offset in hashes:
-      mapper[hash.upper()] = offset
-    values = mapper.keys()
+    # Hàm tìm kiếm các dấu vân tay đã có trong cơ sở dữ liệu
+    def return_matches(hashes):
+        mapper = {}
+        for hash, offset in hashes:
+            mapper[hash.upper()] = offset  # Chuyển dấu vân tay thành chữ hoa và lưu trữ
 
-    for split_values in grouper(values, 1000):
-      query = """
-        SELECT upper(hash), song_fk, offset
-        FROM fingerprints
-        WHERE upper(hash) IN (%s)
-      """
-      vals = list(split_values).copy()
-      length = len(vals)
-      query = query % ', '.join('?' * length)
-      x = db.executeAll(query, values=vals)
-      matches_found = len(x)
-      if matches_found > 0:
-        msg = 'I found %d hash in db'
-        print (colored(msg, 'green') % (
-          matches_found
-        ))
+        values = mapper.keys()
 
-      for hash, sid, offset in x:
-        yield (sid, mapper[hash])
+        # Chia các giá trị thành từng nhóm 1000 để truy vấn hiệu quả hơn
+        for split_values in grouper(values, 1000):
+            query = """
+                SELECT upper(hash), song_fk, offset
+                FROM fingerprints
+                WHERE upper(hash) IN (%s)
+            """
+            vals = list(split_values).copy()
+            length = len(vals)
+            query = query % ', '.join('?' * length)
+            x = db.executeAll(query, values=vals)
 
-  for channeln, channel in enumerate(data):
-    matches.extend(find_matches(channel))
+            matches_found = len(x)
+            if matches_found > 0:
+                print(colored(f'I found {matches_found} hash in db', 'green'))
 
-  def align_matches(matches):
-    diff_counter = {}
-    largest = 0
-    largest_count = 0
-    song_id = -1
+            # Trả về các kết quả tìm thấy
+            for hash, sid, offset in x:
+                yield (sid, mapper[hash])
 
-    for tup in matches:
-      sid, diff = tup
+    # Tìm kiếm dấu vân tay trong từng kênh âm thanh
+    for channeln, channel in enumerate(data):
+        matches.extend(find_matches(channel))
 
-      if diff not in diff_counter:
-        diff_counter[diff] = {}
+    # Hàm căn chỉnh các kết quả khớp và tìm ra bài hát phù hợp nhất
+    def align_matches(matches):
+        diff_counter = {}
+        largest = 0
+        largest_count = 0
+        song_id = -1
 
-      if sid not in diff_counter[diff]:
-        diff_counter[diff][sid] = 0
+        # Xử lý từng cặp (song_id, offset)
+        for sid, diff in matches:
+            if diff not in diff_counter:
+                diff_counter[diff] = {}
 
-      diff_counter[diff][sid] += 1
+            if sid not in diff_counter[diff]:
+                diff_counter[diff][sid] = 0
 
-      if diff_counter[diff][sid] > largest_count:
-        largest = diff
-        largest_count = diff_counter[diff][sid]
-        song_id = sid
-    
+            diff_counter[diff][sid] += 1
 
-    songM = db.get_song_by_id(song_id)
+            # Xác định bài hát có số lần trùng khớp cao nhất
+            if diff_counter[diff][sid] > largest_count:
+                largest = diff
+                largest_count = diff_counter[diff][sid]
+                song_id = sid
 
-    nseconds = round(float(largest) / analyzer.DEFAULT_FS *
-                     analyzer.DEFAULT_WINDOW_SIZE *
-                     analyzer.DEFAULT_OVERLAP_RATIO, 5)
+        # Lấy thông tin bài hát từ cơ sở dữ liệu
+        songM = db.get_song_by_id(song_id)
 
-    return {
-        "SONG_ID" : song_id,
-        "SONG_NAME" : songM[1],
-        "CONFIDENCE" : largest_count,
-        "OFFSET" : int(largest),
-        "OFFSET_SECS" : nseconds
-    }
+        # Tính toán thời gian xuất hiện của mẫu âm thanh
+        nseconds = round(
+            float(largest) / analyzer.DEFAULT_FS * analyzer.DEFAULT_WINDOW_SIZE * analyzer.DEFAULT_OVERLAP_RATIO, 5
+        )
 
-  total_matches_found = len(matches)
+        return {
+            "SONG_ID": song_id,
+            "SONG_NAME": songM[1],  # Tên bài hát
+            "CONFIDENCE": largest_count,  # Độ tin cậy của kết quả
+            "OFFSET": int(largest),  # Vị trí mẫu trong bài hát
+            "OFFSET_SECS": nseconds  # Thời gian xuất hiện của mẫu (giây)
+        }
 
-  if total_matches_found > 0:
-    
-    msg = 'Totally found %d hash'
-    print (colored(msg, 'green') % total_matches_found)
+    total_matches_found = len(matches)
 
-    song = align_matches(matches)
+    # Kiểm tra nếu có mẫu trùng khớp với dữ liệu trong CSDL
+    if total_matches_found > 0:
+        print(colored(f'Totally found {total_matches_found} hash', 'green'))
 
-    msg = ' => song: %s (id=%d)\n'
-    msg += '    offset: %d (%d secs)\n'
+        # Căn chỉnh và xác định bài hát
+        song = align_matches(matches)
 
-    print (colored(msg, 'green') % (
-      song['SONG_NAME'], song['SONG_ID'],
-      song['OFFSET'], song['OFFSET_SECS']
-    ))
-  else:
-    msg = 'Not anything matching'
-    print (colored(msg, 'red'))
+        print(colored(f' => song: {song["SONG_NAME"]} (id={song["SONG_ID"]})\n' 
+                      f'    offset: {song["OFFSET"]} ({song["OFFSET_SECS"]} secs)\n', 'green'))
+    else:
+        print(colored('Not anything matching', 'red'))

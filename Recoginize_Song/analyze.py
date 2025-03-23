@@ -9,45 +9,56 @@ from src.db import SQLiteDatabase
 MUSICS_FOLDER_PATH = "mp3/"
 
 if __name__ == '__main__':
-  db = SQLiteDatabase()
+    db = SQLiteDatabase()
 
-  for filename in os.listdir(MUSICS_FOLDER_PATH):
-    if filename.endswith(".mp3"):
-      reader = FileReader(MUSICS_FOLDER_PATH + filename)
-      audio = reader.parse_audio()
+    # Duyệt qua tất cả các tệp trong thư mục chứa nhạc
+    for filename in os.listdir(MUSICS_FOLDER_PATH):
+        if filename.endswith(".mp3"):  # Chỉ xử lý các tệp có đuôi .mp3
+            # Đọc tệp âm thanh và phân tích dữ liệu
+            reader = FileReader(MUSICS_FOLDER_PATH + filename)
+            audio = reader.parse_audio()  # Trả về thông tin về âm thanh
 
-      song = db.get_song_by_filehash(audio['file_hash'])
-      song_id = db.add_song(filename, audio['file_hash'])
+            # Kiểm tra xem bài hát đã có trong cơ sở dữ liệu chưa (dựa trên hash)
+            song = db.get_song_by_filehash(audio['file_hash'])
+            song_id = db.add_song(filename, audio['file_hash'])  # Thêm bài hát vào DB nếu chưa có
 
-      print (colored("Analyzing music: %s","green") % filename)
-      
-      if song:
-        hash_count = db.get_song_hashes_count(song_id)
+            # Hiển thị thông báo đang phân tích bài hát
+            print(colored("Analyzing music: %s", "green") % filename)
+            
+            if song:  # Nếu bài hát đã tồn tại trong DB
+                hash_count = db.get_song_hashes_count(song_id)
 
-        if hash_count > 0:
-          msg = 'Warning: This song has already exists (%d hashes), skip' % hash_count
-          print (colored(msg, 'yellow'))
+                if hash_count > 0:  # Nếu bài hát đã có dữ liệu hash trước đó
+                    msg = 'Warning: This song already exists (%d hashes), skipping...' % hash_count
+                    print(colored(msg, 'yellow'))  # Hiển thị cảnh báo
+                    continue  # Bỏ qua bài hát này, không phân tích lại
 
-          continue
+            # Tập hợp lưu trữ các hash của bài hát
+            hashes = set()
+            channel_amount = len(audio['channels'])  # Số lượng kênh âm thanh (mono hoặc stereo)
 
-      hashes = set()
-      channel_amount = len(audio['channels'])
+            # Duyệt qua từng kênh trong bài hát
+            for channeln, channel in enumerate(audio['channels']):
+                # Phân tích dấu vân tay (fingerprint) cho từng kênh
+                channel_hashes = analyzer.fingerprint(channel, Fs=audio['Fs'])
+                channel_hashes = set(channel_hashes)  # Loại bỏ trùng lặp
 
-      for channeln, channel in enumerate(audio['channels']):
-        channel_hashes = analyzer.fingerprint(channel, Fs=audio['Fs'])
-        channel_hashes = set(channel_hashes)
+                # Hiển thị thông tin về số hash đã lưu từ kênh hiện tại
+                msg = 'Channel %d saved %d hashes'
+                print(colored(msg, attrs=['dark']) % (
+                    channeln, len(channel_hashes)
+                ))
 
-        msg = 'Channel %d saved %d hashes'
-        print (colored(msg, attrs=['dark']) % (
-           channeln, len(channel_hashes)
-        ))
+                # Hợp tất cả các hash từ các kênh vào tập hợp chung
+                hashes |= channel_hashes
 
-        hashes |= channel_hashes
+            # Chuẩn bị dữ liệu để lưu vào database
+            values = []
+            for hash, offset in hashes:
+                values.append((song_id, hash, offset))
 
-      values = []
-      for hash, offset in hashes:
-        values.append((song_id, hash, offset))
+            # Lưu trữ các hash vào cơ sở dữ liệu
+            db.store_fingerprints(values)
 
-      db.store_fingerprints(values)
-
-  print (colored('Done',"green"))
+    # Thông báo hoàn thành phân tích
+    print(colored('Done', "green"))
