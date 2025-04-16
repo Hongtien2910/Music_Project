@@ -2,3 +2,7 @@ mp3/
 db/
 **/__pycache__/
 test/
+myenv/
+Music_Spectogram_Images/
+Music_Sliced_Images/
+music/
