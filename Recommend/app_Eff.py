@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify
-from recommend import load_data, recommend_songs, build_model
+from recommend_Eff import load_data, recommend_songs, build_model
 import torch
 
 app = Flask(__name__)
 
 # Load model & dữ liệu khi khởi động server
 model = build_model()
-model.load_state_dict(torch.load("model_CNN.pt", map_location=torch.device("cpu")))
+model.load_state_dict(torch.load("model_EfficientNet.pt", map_location=torch.device("cpu")))
 model.eval()
 images_by_label = load_data()
 
