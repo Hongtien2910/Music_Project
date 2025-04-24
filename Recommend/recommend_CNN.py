@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import numpy as np 
 import cv2 
+import pickle
 from collections import defaultdict
 
 # ========== Định nghĩa kiến trúc model ==========
@@ -68,57 +69,70 @@ def load_data():
             print(f"Lỗi đọc ảnh {f}: {e}")
     return images_by_label
 
-# ========== Hàm gợi ý bài hát ==========
+# ========== Trích xuất & lưu vector đặc trưng ==========
 
-def recommend_songs(song_name, images_by_label, feature_model):
+def save_feature_vectors(images_by_label, feature_model, output_file="features.pkl"):
     device = next(feature_model.parameters()).device
-    matrix_size = 40
-    prediction_anchor = torch.zeros((1, matrix_size)).to(device)
-
-    predictions_song = []
-    predictions_label = []
-    distance_array = []
+    feature_model.eval()
+    features = {}
 
     with torch.no_grad():
-        if song_name not in images_by_label:
-            return []
-
-        anchor_imgs = np.stack(images_by_label[song_name])
-        anchor_imgs = torch.from_numpy(anchor_imgs[:, None, :, :].astype(np.float32)).to(device)
-        anchor_preds = feature_model(anchor_imgs)
-        prediction_anchor = anchor_preds.mean(dim=0, keepdim=True)
-
         for label, img_list in images_by_label.items():
-            if label == song_name:
-                continue
             imgs = np.stack(img_list)
             imgs_tensor = torch.from_numpy(imgs[:, None, :, :].astype(np.float32)).to(device)
-            pred = feature_model(imgs_tensor).mean(dim=0, keepdim=True)
-            predictions_song.append(pred)
-            predictions_label.append(label)
+            preds = feature_model(imgs_tensor)
+            mean_vector = preds.mean(dim=0).cpu().numpy()
+            features[label] = mean_vector
 
-        prediction_anchor_norm = prediction_anchor / prediction_anchor.norm(dim=1, keepdim=True)
-        preds_tensor = torch.cat(predictions_song, dim=0)
-        preds_norm = preds_tensor / preds_tensor.norm(dim=1, keepdim=True)
-        similarity = torch.mm(preds_norm, prediction_anchor_norm.T).squeeze()
+    with open(output_file, "wb") as f:
+        pickle.dump(features, f)
+    print(f"✅ Đã lưu {len(features)} vector đặc trưng vào {output_file}")
 
-        topk = torch.topk(similarity, k=3)
-        top_indices = topk.indices.cpu().numpy()
-        top_values = topk.values.cpu().numpy()
+def load_feature_vectors(feature_file="features.pkl"):
+    with open(feature_file, "rb") as f:
+        features = pickle.load(f)
+    return features
 
-        list_song = []
-        list_song.append({'id': 1, 'name': song_name, 'link': f'templates/music/{song_name}.mp3', 'genre': 'Original Song'})
+# ========== Gợi ý bài hát từ vector đã lưu ==========
 
-        for i, idx in enumerate(top_indices):
-            name = predictions_label[idx]
-            value = f'{top_values[i]:.4f}'
-            list_song.append({
-                'id': i + 2,
-                'name': name,
-                'link': f'templates/music/{name}.mp3',
-                'genre': 'Recommend Song',
-                'metrics': 'Similar:',
-                'value': value
-            })
+def recommend_songs(song_name, features_dict):
+    if song_name not in features_dict:
+        return []
 
-        return list_song
+    anchor = torch.tensor(features_dict[song_name])
+    anchor = anchor / anchor.norm()
+
+    predictions_label = []
+    predictions_vec = []
+
+    for label, vec in features_dict.items():
+        if label == song_name:
+            continue
+        v = torch.tensor(vec)
+        v = v / v.norm()
+        predictions_label.append(label)
+        predictions_vec.append(v)
+
+    preds_tensor = torch.stack(predictions_vec)
+    similarity = torch.matmul(preds_tensor, anchor)
+
+    topk = torch.topk(similarity, k=3)
+    top_indices = topk.indices.numpy()
+    top_values = topk.values.numpy()
+
+    list_song = []
+    list_song.append({'id': 1, 'name': song_name, 'link': f'templates/music/{song_name}.mp3', 'genre': 'Original Song'})
+
+    for i, idx in enumerate(top_indices):
+        name = predictions_label[idx]
+        value = f'{top_values[i]:.4f}'
+        list_song.append({
+            'id': i + 2,
+            'name': name,
+            'link': f'templates/music/{name}.mp3',
+            'genre': 'Recommend Song',
+            'metrics': 'Similar:',
+            'value': value
+        })
+
+    return list_song

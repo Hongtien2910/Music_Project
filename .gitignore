@@ -7,3 +7,4 @@ Music_Spectogram_Images/
 Music_Sliced_Images/
 music/
 *.pt
+*.pkl
