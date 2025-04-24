@@ -8,3 +8,4 @@ Music_Sliced_Images/
 music/
 *.pt
 *.pkl
+node_modules/
