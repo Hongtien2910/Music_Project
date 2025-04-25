@@ -1,88 +1,125 @@
-import os
-import pickle
-import numpy as np
-from pydub import AudioSegment
 from flask import Flask, request, jsonify
-import src.analyzer as analyzer
-from termcolor import colored
+import os
+import tempfile
+import subprocess
+import numpy as np
+from itertools import zip_longest
+from src import analyzer
+from src.db import SQLiteDatabase
 
 app = Flask(__name__)
 
-# Đường dẫn tới file fingerprints
-PKL_FILE_PATH = 'fingerprints.pkl'
+# Hàm chia nhỏ dữ liệu thành từng nhóm n phần tử
+def grouper(iterable, n, fillvalue=None):
+    args = [iter(iterable)] * n
+    return (filter(None, values) for values in zip_longest(fillvalue=fillvalue, *args))
 
-# Global variable chứa fingerprints (chỉ load 1 lần)
-fingerprint_db = {}
+# Truy vấn database để tìm bài hát khớp fingerprint
+def return_matches(hashes, db):
+    mapper = {}
+    for hash, offset in hashes:
+        mapper[hash.upper()] = offset
+    values = mapper.keys()
 
-# Load fingerprint database khi khởi động server
-def load_fingerprints():
-    global fingerprint_db
-    if not fingerprint_db:
-        with open(PKL_FILE_PATH, 'rb') as f:
-            fingerprint_db = pickle.load(f)
-        print(colored('✅ Fingerprints loaded successfully!', 'green'))
-    return fingerprint_db
+    for split_values in grouper(values, 300):
+        query = """
+            SELECT upper(hash), song_fk, offset
+            FROM fingerprints
+            WHERE upper(hash) IN (%s)
+        """
+        vals = list(split_values).copy()
+        length = len(vals)
+        query = query % ', '.join('?' * length)
+        results = db.executeAll(query, values=vals)
 
-# Tìm bài hát từ đoạn audio input
-def find_song_in_fingerprints(samples):
-    # Sửa lại chỗ này để đảm bảo hashes là list
-    hashes = list(analyzer.fingerprint(samples, Fs=analyzer.DEFAULT_FS))
-    fingerprints = load_fingerprints()
+        for hash, sid, offset in results:
+            yield (sid, mapper[hash])
 
-    best_match = None
-    best_score = 0
+# Tạo fingerprint từ dữ liệu và tìm các khớp
+def find_matches(samples, db, Fs=analyzer.DEFAULT_FS):
+    hashes = analyzer.fingerprint(samples, Fs=Fs)
+    return return_matches(hashes, db)
 
-    for song_name, stored_hashes in fingerprints.items():
-        matches = sum(1 for h in hashes if h in set(stored_hashes))
-        if matches > best_score:
-            best_score = matches
-            best_match = song_name
+# Tìm bài hát có nhiều fingerprint khớp nhất
+def align_matches(matches, db):
+    diff_counter = {}
+    largest = 0
+    largest_count = 0
+    song_id = -1
 
-    return best_match, best_score
+    for sid, diff in matches:
+        try:
+            diff = float(diff)  # đảm bảo diff là float
+        except ValueError:
+            continue
+
+        if diff not in diff_counter:
+            diff_counter[diff] = {}
+        if sid not in diff_counter[diff]:
+            diff_counter[diff][sid] = 0
+        diff_counter[diff][sid] += 1
+
+        if diff_counter[diff][sid] > largest_count:
+            largest = diff
+            largest_count = diff_counter[diff][sid]
+            song_id = sid
+
+    song = db.get_song_by_id(song_id)
+    step_size = analyzer.DEFAULT_WINDOW_SIZE * (1 - analyzer.DEFAULT_OVERLAP_RATIO)
+    nseconds = round(float(largest) * step_size / analyzer.DEFAULT_FS, 5)
+
+
+    return {
+        "SONG_ID": song_id,
+        "SONG_NAME": song[1],
+        "CONFIDENCE": largest_count,
+        # "OFFSET": int(float(largest)),  # sửa ở đây
+        # "OFFSET_SECS": nseconds
+    }
 
 # API nhận diện bài hát
-@app.route('/recognize_song', methods=['POST'])
-def recognize_song():
+@app.route('/recognize', methods=['POST'])
+def identify_song():
     if 'file' not in request.files:
-        return jsonify({"error": "No file part"}), 400
+        return jsonify({'error': 'Không tìm thấy file'}), 400
 
     file = request.files['file']
-
     if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
+        return jsonify({'error': 'Tên file không hợp lệ'}), 400
 
-    if file and file.filename.endswith('.mp3'):
-        # Lưu tạm file
-        if not os.path.exists('temp'):
-            os.makedirs('temp')
-        file_path = os.path.join('temp', file.filename)
+    try:
+        tmp_dir = tempfile.gettempdir()
+        file_path = os.path.join(tmp_dir, file.filename)
         file.save(file_path)
 
-        # Đọc file, chỉ lấy 15 giây đầu
-        audio = AudioSegment.from_file(file_path, format="mp3")
-        audio = audio.set_channels(1).set_frame_rate(analyzer.DEFAULT_FS)
-        audio = audio[:15000]  # Chỉ lấy 15 giây đầu
-        samples = np.array(audio.get_array_of_samples(), dtype=np.int16)
+        # Kết nối đến database trong từng request
+        db = SQLiteDatabase()
 
-        # Xóa file tạm
-        os.remove(file_path)
+        # Dùng ffmpeg để chuyển đổi mp3 thành PCM 16-bit mono phù hợp
+        pcm_data = subprocess.check_output([
+            "ffmpeg", "-i", file_path,
+            "-f", "s16le",
+            "-acodec", "pcm_s16le",
+            "-ac", "1",
+            "-ar", str(analyzer.DEFAULT_FS),
+            "-loglevel", "quiet",
+            "pipe:1"
+        ])
 
-        # Tìm bài hát
-        song_name, matches = find_song_in_fingerprints(samples)
+        # Chuyển bytes thành numpy array
+        samples = np.frombuffer(pcm_data, dtype=np.int16)
 
-        if song_name:
-            return jsonify({
-                "SONG_ID": song_name,
-                "SONG_NAME": song_name,
-                "CONFIDENCE": matches,
-                "OFFSET": 0,
-                "OFFSET_SECS": 0  # Bạn có thể cập nhật nếu dùng thêm thông tin offset
-            })
-        else:
-            return jsonify({"error": "Song not found"}), 404
+        matches = list(find_matches(samples, db))
 
-    return jsonify({"error": "Invalid file type, only MP3 allowed"}), 400
+        if not matches:
+            return jsonify({'message': 'Không tìm thấy bài hát phù hợp'}), 404
+
+        song = align_matches(matches, db)
+        return jsonify(song), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
-    load_fingerprints()  # Load fingerprints khi khởi động server
-    app.run(debug=True)
+    app.run(debug=True, port = 5001)

@@ -29,6 +29,6 @@ def cut_mp3(input_file, output_file, start_time=72, duration=10):
         print(f"Lỗi: {e}")
 
 # Gọi hàm để cắt file
-input_mp3 = "mp3/Justin Bieber - Baby (feat. Ludacris).mp3" 
+input_mp3 = "mp3/Ariana Grande - Last Christmas.mp3" 
 output_mp3 = "Test.mp3"  # File đầu ra
-cut_mp3(input_mp3, output_mp3, start_time=0, duration=10)
+cut_mp3(input_mp3, output_mp3, start_time=30, duration=10)

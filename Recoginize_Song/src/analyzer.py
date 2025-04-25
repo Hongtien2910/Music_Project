@@ -10,11 +10,11 @@ from operator import itemgetter
 IDX_FREQ_I = 0  # Chỉ số của tần số trong danh sách peak
 IDX_TIME_J = 1  # Chỉ số của thời gian trong danh sách peak
 DEFAULT_FS = 44100  # Tần số lấy mẫu mặc định (Hz)
-DEFAULT_WINDOW_SIZE = 4096  # Kích thước cửa sổ FFT
-DEFAULT_OVERLAP_RATIO = 0.5  # Tỉ lệ chồng lấn của cửa sổ FFT
-DEFAULT_FAN_VALUE = 15  # Giá trị fan-out (số lượng peak để tạo hash)
+DEFAULT_WINDOW_SIZE = 8192  # Kích thước cửa sổ FFT
+DEFAULT_OVERLAP_RATIO = 0.3  # Tỉ lệ chồng lấn của cửa sổ FFT
+DEFAULT_FAN_VALUE = 5  # Giá trị fan-out (số lượng peak để tạo hash)
 DEFAULT_AMP_MIN = 20  # Ngưỡng biên độ tối thiểu để coi là peak
-PEAK_NEIGHBORHOOD_SIZE = 20  # Kích thước vùng lân cận để phát hiện peak
+PEAK_NEIGHBORHOOD_SIZE = 15  # Kích thước vùng lân cận để phát hiện peak
 MIN_HASH_TIME_DELTA = 0  # Khoảng thời gian tối thiểu giữa hai peak khi tạo hash
 MAX_HASH_TIME_DELTA = 200  # Khoảng thời gian tối đa giữa hai peak khi tạo hash
 PEAK_SORT = True  # Xác định có sắp xếp peak theo thời gian hay không

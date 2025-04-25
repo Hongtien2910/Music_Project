@@ -16,6 +16,9 @@ class SQLiteDatabase():
     self.conn = sqlite3.connect(self.DB_FILE_NAME)
     self.conn.text_factory = str
     self.cur = self.conn.cursor()
+    
+    self.cur.execute("CREATE INDEX IF NOT EXISTS idx_hash ON fingerprints(UPPER(hash))")
+    self.conn.commit()
 
   def __del__(self):
     self.conn.commit() # Lưu lại các thay đổi trước khi đóng kết nối
@@ -80,7 +83,7 @@ class SQLiteDatabase():
           in zip_longest(fillvalue=fillvalue, *args))
 
     # Nhóm các giá trị thành từng nhóm nhỏ
-    for split_values in grouper(values, 1000):
+    for split_values in grouper(values, 300):
       query = "INSERT OR IGNORE INTO %s (%s) VALUES (?, ?, ?)" % (table, ", ".join(columns))
       self.cur.executemany(query, split_values) # Chèn nhiều bản ghi cùng lúc
 
