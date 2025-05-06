@@ -2,8 +2,10 @@ import SongSkeleton from "@/components/skeletons/SongSkeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useMusicStore } from "@/stores/useMusicStore";
 import { SignedIn } from "@clerk/clerk-react";
 import { Heart, HomeIcon, Library, MessageCircle, SearchIcon } from "lucide-react";
+import { useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 
 
@@ -11,7 +13,13 @@ const LeftSidebar = () => {
     const location = useLocation();
     const currentPath = location.pathname; 
 
-    const isLoading = true;
+    const { songs, fetchSongs, isLoading} = useMusicStore();
+
+    useEffect(() => {
+        fetchSongs();
+    }, [fetchSongs]);
+
+    console.log("songs", songs);
 
     return (
         <div className = "h-full flex flex-col gap-2">
@@ -80,7 +88,17 @@ const LeftSidebar = () => {
                     <div className="space-y-2">
                         {isLoading ? (
                             <SongSkeleton />
-                        ) : ("some music")}
+                        ) : (
+                            songs.map((song) => (
+                                <Link to={`/songs/${song._id}`} key={song._id} className="p-2 hover:bg-zinc-800 rounded-md flex items-center gap-3 group cursor-pointer">
+                                    <img src={song.imageUrl} alt="Song img" className="size-12 rounded-md flex-shrink-0 object-cover" />
+                                    <div className="flex-1 min-w-0 hidden md:block">
+                                        <p className="font-medium truncate">{song.title}</p>
+                                        <p className="text-sm text-zinc-400 truncate">Artist ・ {song.artist}</p>
+                                    </div>
+                                </Link>
+                            ))
+                        )}
                     </div>
                 </ScrollArea>
             </div>
