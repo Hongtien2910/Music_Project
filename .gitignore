@@ -9,3 +9,4 @@ music/
 *.pt
 *.pkl
 node_modules/
+*.env
