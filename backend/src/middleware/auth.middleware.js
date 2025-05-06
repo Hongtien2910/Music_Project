@@ -15,9 +15,10 @@ export const requireAdmin = async (req, res, next) => {
         emailAddress;
 
         if (!isAdmin) {
-            return res.status(403).json({ message: "Forbidden - you must be an admin" });
+            return res.status(403).json({ message: "Unauthorized - you must be an admin" });
         }
         next();
     } catch (error) {
+        next(error);
     }
 }
