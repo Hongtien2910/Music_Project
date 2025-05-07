@@ -87,7 +87,7 @@ const LeftSidebar = () => {
                 <div className = "flex items-center justify-between mb-4">
                     <div className = "flex items-center text-white px-2">
                         <Library className = "mr-2 size-5" />
-                        <span className = "text-lg font-semibold">Recent Songs</span>
+                        <span className = "text-lg font-semibold">All Albums</span>
                     </div>
                 </div>
                 <ScrollArea className = "h-[calc(100vh-300px)]">
