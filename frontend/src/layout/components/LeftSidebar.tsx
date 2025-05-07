@@ -13,13 +13,21 @@ const LeftSidebar = () => {
     const location = useLocation();
     const currentPath = location.pathname; 
 
-    const { songs, fetchSongs, isLoading} = useMusicStore();
+    // const { songs, fetchSongs, isLoading} = useMusicStore();
+
+    // useEffect(() => {
+    //     fetchSongs();
+    // }, [fetchSongs]);
+
+    // console.log("songs", songs);
+
+    const { albums, fetchAlbums, isLoading} = useMusicStore();
 
     useEffect(() => {
-        fetchSongs();
-    }, [fetchSongs]);
+        fetchAlbums();
+    }, [fetchAlbums]);
 
-    console.log("songs", songs);
+    console.log("albums", albums);
 
     return (
         <div className = "h-full flex flex-col gap-2">
@@ -89,12 +97,21 @@ const LeftSidebar = () => {
                         {isLoading ? (
                             <SongSkeleton />
                         ) : (
-                            songs.map((song) => (
-                                <Link to={`/songs/${song._id}`} key={song._id} className="p-2 hover:bg-zinc-800 rounded-md flex items-center gap-3 group cursor-pointer">
-                                    <img src={song.imageUrl} alt="Song img" className="size-12 rounded-md flex-shrink-0 object-cover" />
+                            // songs.map((song) => (
+                            //     <Link to={`/songs/${song._id}`} key={song._id} className="p-2 hover:bg-zinc-800 rounded-md flex items-center gap-3 group cursor-pointer">
+                            //         <img src={song.imageUrl} alt="Song img" className="size-12 rounded-md flex-shrink-0 object-cover" />
+                            //         <div className="flex-1 min-w-0 hidden md:block">
+                            //             <p className="font-medium truncate">{song.title}</p>
+                            //             <p className="text-sm text-zinc-400 truncate">Artist ・ {song.artist}</p>
+                            //         </div>
+                            //     </Link>
+                            // ))
+                            albums.map((album) => (
+                                <Link to={`/albums/${album._id}`} key={album._id} className="p-2 hover:bg-zinc-800 rounded-md flex items-center gap-3 group cursor-pointer">
+                                    <img src={album.imageUrl} alt="Album img" className="size-12 rounded-md flex-shrink-0 object-cover" />
                                     <div className="flex-1 min-w-0 hidden md:block">
-                                        <p className="font-medium truncate">{song.title}</p>
-                                        <p className="text-sm text-zinc-400 truncate">Artist ・ {song.artist}</p>
+                                        <p className="font-medium truncate">{album.title}</p>
+                                        <p className="text-sm text-zinc-400 truncate">Artist ・ {album.artist}</p>
                                     </div>
                                 </Link>
                             ))

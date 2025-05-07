@@ -10,3 +10,6 @@ music/
 *.pkl
 node_modules/
 *.env
+frontend/public/albums/
+frontend/public/cover-images/
+frontend/public/songs/

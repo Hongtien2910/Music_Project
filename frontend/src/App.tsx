@@ -6,6 +6,7 @@ import MainLayout from "./layout/MainLayout";
 import SearchPage from "./pages/search/SearchPage";
 import ChatPage from "./pages/chat/ChatPage";
 import LikedSongPage from "./pages/liked-song/LikedSongPage";
+import AlbumPage from "./pages/album/AlbumPage";
 
 function App() {
 
@@ -19,6 +20,7 @@ function App() {
           <Route path ="/search" element={<SearchPage />} />
           <Route path ="/chat" element={<ChatPage />} />
           <Route path ="/liked-song" element={<LikedSongPage />} />
+          <Route path ="albums/:albumId" element={<AlbumPage />} />
         </Route>
       </Routes>
     </>
