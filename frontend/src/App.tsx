@@ -7,6 +7,9 @@ import SearchPage from "./pages/search/SearchPage";
 import ChatPage from "./pages/chat/ChatPage";
 import LikedSongPage from "./pages/liked-song/LikedSongPage";
 import AlbumPage from "./pages/album/AlbumPage";
+import AdminPage from "./pages/admin/AdminPage";
+
+import { Toaster } from "react-hot-toast";
 
 function App() {
 
@@ -15,6 +18,8 @@ function App() {
       <Routes>
         <Route path ="/sso-callback" element={<AuthenticateWithRedirectCallback signUpForceRedirectUrl={"/auth-callback"} />} />
         <Route path ="/auth-callback" element={<AuthCallbackPage />} />
+        <Route path ="/admin" element={<AdminPage />} />
+
         <Route element= {<MainLayout />}>
           <Route path ="/" element={<HomePage />} />
           <Route path ="/search" element={<SearchPage />} />
@@ -23,6 +28,7 @@ function App() {
           <Route path ="albums/:albumId" element={<AlbumPage />} />
         </Route>
       </Routes>
+      <Toaster />
     </>
   )
 } 
