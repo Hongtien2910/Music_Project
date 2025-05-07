@@ -51,7 +51,16 @@ module.exports = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			}
-  		}
+  		},
+		keyframes: {
+			equalizer: {
+				'0%, 100%': { height: '20%' },
+				'50%': { height: '100%' },
+			},
+		},
+		animation: {
+			equalizer: 'equalizer 1s infinite ease-in-out',
+		}
   	}
   },
   plugins: [require("tailwindcss-animate")],

@@ -64,7 +64,7 @@ const FriendsActivity = () => {
 										{isPlaying ? (
 											<div className='mt-1'>
                                                 <div className='flex items-end gap-2'>
-                                                    {isPlaying && <Music className='size-3.5 text-customRed shrink-0' />}
+                                                    {isPlaying && <Music className="size-4 text-customRed animate-bounce" />}
                                                     <div className='text-xs text-zinc-400 truncate'>
                                                         {/* {activity.replace("Playing ", "").split(" by ")[0]} */} Cardiangan - {/* {activity.split(" by ")[1]} */}Toylor Swift
                                                     </div>
