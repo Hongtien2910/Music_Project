@@ -36,7 +36,7 @@ const ChatPage = () => {
 	}, [messages]);
 
 	return (
-		<main className='h-full rounded-lg bg-gradient-to-b from-zinc-800 to-zinc-900 overflow-hidden'>
+		<main className='h-full rounded-lg bg-gradient-to-b bg-zinc-950 overflow-hidden'>
 			<Topbar />
 			<div className='grid lg:grid-cols-[300px_1fr] grid-cols-[80px_1fr] h-[calc(100vh-180px)]'>
 				<UsersList />
@@ -66,10 +66,11 @@ const ChatPage = () => {
 											</Avatar>
 
 											<div
-												className={`rounded-lg p-3 max-w-[70%]
-													${message.senderId === user?.id ? "bg-customRed" : "bg-zinc-800"}
-												`}
-											>
+												className={`p-3 max-w-[70%]
+													${message.senderId === user?.id
+													  ? "bg-customRed rounded-lg rounded-br-none"
+													  : "bg-zinc-800 rounded-lg rounded-bl-none"}
+												  `}>
 												<p className='text-sm'>{message.content}</p>
 												<span className='text-xs text-zinc-300 mt-1 block'>
 													{formatTime(message.createdAt)}

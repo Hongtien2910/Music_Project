@@ -8,6 +8,6 @@ const router = Router();
 router.use(protectRoute);
 
 router.post('/callback', authCallback);
-router.get('/status', protectRoute, checkAuthStatus);
+router.get('/status', checkAuthStatus);
 
 export default router;

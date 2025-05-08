@@ -57,8 +57,6 @@ const AddAlbumDialog = () => {
 				},
 			});
 
-			await fetchStats();
-
 			setNewAlbum({
 				title: "",
 				artist: "",
@@ -67,6 +65,7 @@ const AddAlbumDialog = () => {
 			setImageFile(null);
 			setAlbumDialogOpen(false);
 			toast.success("Album created successfully");
+			await fetchStats();
 		} catch (error: any) {
 			toast.error("Failed to create album: " + error.message);
 		} finally {

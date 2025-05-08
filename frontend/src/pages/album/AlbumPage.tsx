@@ -110,19 +110,28 @@ const AlbumPage = () => {
 												onClick={() => handlePlaySong(index)}
 												className={`grid grid-cols-[16px_4fr_2fr_1fr] gap-4 px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 rounded-md group cursor-pointer`}>
 												<div className='flex items-center justify-center'>
-													{isCurrentSong && isPlaying ? (
+													{isCurrentSong ? (
+														isPlaying ? (
+														// Bài hiện tại và đang phát -> Hiện cột sóng
 														<div className="flex items-end gap-[2px] h-4">
 															<div className="w-[2px] h-full bg-customRed animate-[equalizer_1s_ease-in-out_infinite]" />
 															<div className="w-[2px] h-3 bg-customRed animate-[equalizer_1s_ease-in-out_infinite_0.2s]" />
 															<div className="w-[2px] h-2 bg-customRed animate-[equalizer_1s_ease-in-out_infinite_0.4s]" />
 														</div>
+														) : (
+														// Bài hiện tại nhưng đang dừng -> Hiện icon Play
+														<Play className='h-4 w-4 text-customRed' />
+														)
 													) : (
+														<>
+														{/* Hiện index bài */}
 														<span className='group-hover:hidden'>{index + 1}</span>
-													)}
-													{!isCurrentSong && ( 
+														{/* Icon Play chỉ hiện khi hover */}
 														<Play className='h-4 w-4 hidden group-hover:block' />
-													)} 
+														</>
+													)}
 												</div>
+
 
 												<div className='flex items-center gap-3'>
 													<img src={song.imageUrl} alt={song.title} className='size-10' />

@@ -36,13 +36,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
 			const response = await axiosInstance.get("/auth/status");
 			set({ isAuthenticated: response.data.authenticated });
 		} catch (error: any) {
-			set({ isAuthenticated: false, error: error.response?.data?.message || "Chưa đăng nhập" });
+			set({ isAuthenticated: false, error: error.response.data.message });
 		} finally {
 			set({ isLoading: false });
 		}
 	},
 
 	reset: () => {
-		set({ isAdmin: false, isLoading: false, error: null });
+		set({ isAdmin: false, isAuthenticated:false, isLoading: false, error: null });
 	},
 }));

@@ -16,7 +16,7 @@ const updateApiToken = (token:string | null) => {
 const AuthProvider = ({ children }:{ children: React.ReactNode}) => {
     const {getToken, userId} = useAuth();
     const [loading, setLoading] = useState(true);
-    const { checkAdminStatus } = useAuthStore();
+    const { checkAdminStatus, checkSignedIn } = useAuthStore();
     const { initSocket, disconnectSocket } = useChatStore();
 
     useEffect(() => {
@@ -26,6 +26,7 @@ const AuthProvider = ({ children }:{ children: React.ReactNode}) => {
                 updateApiToken(token);
                 if (token) {
                     await checkAdminStatus();
+                    await checkSignedIn();
 
                     if (userId) initSocket(userId);
                 }
@@ -41,7 +42,7 @@ const AuthProvider = ({ children }:{ children: React.ReactNode}) => {
 
         return () => disconnectSocket();
     }
-    , [getToken, userId, checkAdminStatus, initSocket, disconnectSocket]);
+    , [getToken, userId, checkAdminStatus, checkSignedIn, initSocket, disconnectSocket]);
 
     if (loading) return (
         <div className="h-screen w-full flex items-center justify-center">

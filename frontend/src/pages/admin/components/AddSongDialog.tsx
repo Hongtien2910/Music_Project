@@ -40,12 +40,25 @@ const AddSongDialog = () => {
 	const [files, setFiles] = useState<{ audio: File | null; image: File | null; lyric: File | null  }>({
 		audio: null,
 		image: null,
-    lyric: null,
+    	lyric: null,
 	});
 
 	const audioInputRef = useRef<HTMLInputElement>(null);
 	const imageInputRef = useRef<HTMLInputElement>(null);
-  const lyricInputRef = useRef<HTMLInputElement>(null);
+  	const lyricInputRef = useRef<HTMLInputElement>(null);
+
+	const handleAudioChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+	
+		setFiles((prev) => ({ ...prev, audio: file }));
+	
+		const audio = new Audio(URL.createObjectURL(file));
+		audio.addEventListener("loadedmetadata", () => {
+			const duration = audio.duration;
+			setNewSong((prev) => ({ ...prev, duration: duration.toFixed(0) }));
+		});
+	};
 
 	const handleSubmit = async () => {
 		setIsLoading(true);
@@ -75,8 +88,6 @@ const AddSongDialog = () => {
 				},
 			});
 
-			await fetchStats();
-
 			setNewSong({
 				title: "",
 				artist: "",
@@ -87,9 +98,11 @@ const AddSongDialog = () => {
 			setFiles({
 				audio: null,
 				image: null,
-        lyric: null,
+        		lyric: null,
 			});
 			toast.success("Song added successfully");
+			setSongDialogOpen(false);
+			await fetchStats();
 		} catch (error: any) {
 			toast.error("Failed to add song: " + error.message);
 		} finally {
@@ -113,13 +126,14 @@ const AddSongDialog = () => {
 				</DialogHeader>
 
 				<div className='space-y-4 py-4'>
-					<input
-						type='file'
-						accept='audio/*'
-						ref={audioInputRef}
-						hidden
-						onChange={(e) => setFiles((prev) => ({ ...prev, audio: e.target.files![0] }))}
-					/>
+				<input
+					type='file'
+					accept='audio/*'
+					ref={audioInputRef}
+					hidden
+					onChange={handleAudioChange}
+				/>
+
 
 					<input
 						type='file'
@@ -129,14 +143,14 @@ const AddSongDialog = () => {
 						onChange={(e) => setFiles((prev) => ({ ...prev, image: e.target.files![0] }))}
 					/>
   
-          <input
-            type='file'
-            ref={lyricInputRef}
-            className='hidden'
-            accept='.lrc'
-            onChange={(e) => setFiles((prev) => ({ ...prev, lyric: e.target.files![0] }))}
-          />
-  
+					<input
+						type='file'
+						ref={lyricInputRef}
+						className='hidden'
+						accept='.lrc'
+						onChange={(e) => setFiles((prev) => ({ ...prev, lyric: e.target.files![0] }))}
+					/>
+			
 					{/* image upload area */}
 					<div
 						className='flex items-center justify-center p-6 border-2 border-dashed border-zinc-700 rounded-lg cursor-pointer'
@@ -172,15 +186,15 @@ const AddSongDialog = () => {
 						</div>
 					</div>
   
-            {/* Lyric upload */}
-            <div className='space-y-2'>
-              <label className='text-sm font-medium'>Lyric File (.lrc)</label>
-              <div className='flex items-center gap-2'>
-                <Button variant='outline' onClick={() => lyricInputRef.current?.click()} className='w-full'>
-                  {files.lyric ? files.lyric.name.slice(0, 20) : "Choose Lyric File"}
-                </Button>
-              </div>
-            </div>
+					{/* Lyric upload */}
+					<div className='space-y-2'>
+						<label className='text-sm font-medium'>Lyric File (.lrc)</label>
+						<div className='flex items-center gap-2'>
+							<Button variant='outline' onClick={() => lyricInputRef.current?.click()} className='w-full'>
+							{files.lyric ? files.lyric.name.slice(0, 20) : "Choose Lyric File"}
+							</Button>
+						</div>
+					</div>
 
 					{/* other fields */}
 					<div className='space-y-2'>
