@@ -104,18 +104,15 @@ export const createAlbum = async (req, res, next) => {
 };
 
 export const deleteAlbum = async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        await Song.deleteMany({ albumId: id });
-        await Album.findByIdAndDelete(id);
-        if (!album) {
-            return res.status(404).json({ message: "Album not found" });
-        }
-        res.status(200).json({ message: "Album deleted successfully" });
-    } catch (error) {
-        console.log("Error in delete Album", error);
-        next(error);
-    }
+	try {
+		const { id } = req.params;
+		await Song.deleteMany({ albumId: id });
+		await Album.findByIdAndDelete(id);
+		res.status(200).json({ message: "Album deleted successfully" });
+	} catch (error) {
+		console.log("Error in deleteAlbum", error);
+		next(error);
+	}
 };
 
 export const checkAdmin = async (req, res, next) => {
