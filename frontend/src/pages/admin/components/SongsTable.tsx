@@ -24,7 +24,7 @@ const SongsTable = () => {
 	}
 
 	return (
-		<div className="border border-zinc-800 rounded">
+		<ScrollArea className="h-[500px] w-full rounded-md border">
 			<Table>
 				<TableHeader>
 					<TableRow className='hover:bg-zinc-800/50'>
@@ -35,10 +35,8 @@ const SongsTable = () => {
 						<TableHead className='text-right'>Actions</TableHead>
 					</TableRow>
 				</TableHeader>
-			</Table>
 
-			<ScrollArea className="h-[calc(100vh-300px)]">
-				<Table>
+
 					<TableBody>
 						{songs.map((song) => (
 							<TableRow key={song._id} className='hover:bg-zinc-800/50'>
@@ -68,9 +66,8 @@ const SongsTable = () => {
 							</TableRow>
 						))}
 					</TableBody>
-				</Table>
-			</ScrollArea>
-		</div>
+			</Table>
+		</ScrollArea>
 	);
 };
 

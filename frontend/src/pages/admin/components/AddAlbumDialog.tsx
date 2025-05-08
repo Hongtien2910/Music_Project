@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { axiosInstance } from "@/lib/axios";
+import { useMusicStore } from "@/stores/useMusicStore";
 import { Plus, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -18,6 +19,8 @@ const AddAlbumDialog = () => {
 	const [albumDialogOpen, setAlbumDialogOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const { fetchStats } = useMusicStore();
 
 	const [newAlbum, setNewAlbum] = useState({
 		title: "",
@@ -54,6 +57,8 @@ const AddAlbumDialog = () => {
 				},
 			});
 
+			await fetchStats();
+
 			setNewAlbum({
 				title: "",
 				artist: "",
@@ -72,7 +77,7 @@ const AddAlbumDialog = () => {
 	return (
 		<Dialog open={albumDialogOpen} onOpenChange={setAlbumDialogOpen}>
 			<DialogTrigger asChild>
-				<Button className='bg-violet-500 hover:bg-violet-600 text-white'>
+				<Button className='bg-customRed hover:bg-customRed/50 text-white'>
 					<Plus className='mr-2 h-4 w-4' />
 					Add Album
 				</Button>
@@ -143,7 +148,7 @@ const AddAlbumDialog = () => {
 					</Button>
 					<Button
 						onClick={handleSubmit}
-						className='bg-violet-500 hover:bg-violet-600'
+						className='bg-customRed hover:bg-customRed/50'
 						disabled={isLoading || !imageFile || !newAlbum.title || !newAlbum.artist}
 					>
 						{isLoading ? "Creating..." : "Add Album"}

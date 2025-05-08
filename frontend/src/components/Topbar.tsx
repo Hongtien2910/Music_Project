@@ -3,10 +3,17 @@ import { LayoutDashboardIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import SignInOAuthButtons from "./SignInOAuthButtons";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useEffect } from "react";
 
 const Topbar = () => {
     const {isAdmin} = useAuthStore();
-    console.log(isAdmin);
+    const { isAuthenticated, checkSignedIn } = useAuthStore(); // Lấy trạng thái đăng nhập và hàm kiểm tra
+
+    useEffect(() => {
+        checkSignedIn(); // Kiểm tra trạng thái đăng nhập khi component được render
+    }, [checkSignedIn]); // Hàm checkSignedIn chỉ gọi lại khi nó thay đổi
+
+    console.log(isAuthenticated);
   return (
     <div className="flex items-center justify-between p-4 sticky top-0 bg-zinc-900/75 backdrop-blur-md z-10">
         <div className = "flex gap-2 items-center">
@@ -27,13 +34,15 @@ const Topbar = () => {
             <div className="relative">
                 <UserButton
                     appearance={{
-                    elements: {
-                        userButtonAvatarBox: "w-9 h-9 rounded-full",
-                    },
+                        elements: {
+                            userButtonAvatarBox: "w-9 h-9 rounded-full",
+                        },
                     }}
                 />
-                <div className="absolute bottom-0 right-0 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-customRed"></div>
-            </div>
+                {isAuthenticated && ( 
+                    <div className="absolute bottom-0 right-0 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-customRed"></div>
+                )}
+        </div>
 
 
         </div>

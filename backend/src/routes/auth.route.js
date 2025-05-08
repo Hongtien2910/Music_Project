@@ -1,8 +1,13 @@
 import { Router } from 'express';
-import { authCallback } from '../controllers/auth.controller.js';
+import { authCallback, checkAuthStatus } from '../controllers/auth.controller.js';
+
+import { protectRoute } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
+router.use(protectRoute);
+
 router.post('/callback', authCallback);
+router.get('/status', protectRoute, checkAuthStatus);
 
 export default router;

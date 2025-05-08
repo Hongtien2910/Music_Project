@@ -28,6 +28,8 @@ const AddSongDialog = () => {
 	const [songDialogOpen, setSongDialogOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 
+	const { fetchStats } = useMusicStore();
+
 	const [newSong, setNewSong] = useState<NewSong>({
 		title: "",
 		artist: "",
@@ -64,7 +66,7 @@ const AddSongDialog = () => {
 
 			formData.append("audioFile", files.audio);
 			formData.append("imageFile", files.image);
-      formData.append("lyricFile", files.lyric);
+      		formData.append("lyricFile", files.lyric);
       
 
 			await axiosInstance.post("/admin/songs", formData, {
@@ -72,6 +74,8 @@ const AddSongDialog = () => {
 					"Content-Type": "multipart/form-data",
 				},
 			});
+
+			await fetchStats();
 
 			setNewSong({
 				title: "",
