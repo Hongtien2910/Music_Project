@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { usePlayerStore } from "@/stores/usePlayerStore";
-import { ListMusic, Mic2, Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume1 } from "lucide-react";
+import { ListMusic, Mic2, Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume1, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 const formatTime = (seconds: number) => {
 	const minutes = Math.floor(seconds / 60);
@@ -17,6 +18,7 @@ export const PlaybackControls = () => {
 	const [currentTime, setCurrentTime] = useState(0);
 	const [duration, setDuration] = useState(0);
 	const audioRef = useRef<HTMLAudioElement | null>(null);
+	const [isMuted, setIsMuted] = useState(false);
 
 	useEffect(() => {
 		audioRef.current = document.querySelector("audio");
@@ -134,30 +136,52 @@ export const PlaybackControls = () => {
 				</div>
 				{/* volume controls */}
 				<div className='hidden sm:flex items-center gap-4 min-w-[180px] w-[30%] justify-end'>
-					<Button size='icon' variant='ghost' className='hover:text-white text-zinc-400'>
-						<Mic2 className='h-4 w-4 text-white' />
+					<Button asChild size="icon" variant="ghost" className="hover:text-white text-zinc-400">
+						<Link to="/lyric">
+							<Mic2 className="h-4 w-4 text-white" />
+						</Link>
 					</Button>
 					<Button size='icon' variant='ghost' className='hover:text-white text-zinc-400'>
 						<ListMusic className='h-4 w-4 text-white' />
 					</Button>
 
 					<div className='flex items-center gap-2'>
-						<Button size='icon' variant='ghost' className='hover:text-white text-zinc-400'>
+					<Button
+						size='icon'
+						variant='ghost'
+						className='hover:text-white text-zinc-400'
+						onClick={() => {
+							const newMuted = !isMuted;
+							setIsMuted(newMuted);
+							const newVolume = newMuted ? 0 : 75;
+							setVolume(newVolume);
+							if (audioRef.current) {
+							audioRef.current.volume = newVolume / 100;
+							}
+						}}
+						>
+						{isMuted ? (
+							<VolumeX className='h-4 w-4 text-white' />
+						) : (
 							<Volume1 className='h-4 w-4 text-white' />
-						</Button>
+						)}
+					</Button>
 
-						<Slider
-							value={[volume]}
-							max={100}
-							step={1}
-							className='w-24 hover:cursor-grab active:cursor-grabbing [&_[role=slider]]:bg-customRed'
-							onValueChange={(value) => {
-								setVolume(value[0]);
-								if (audioRef.current) {
-									audioRef.current.volume = value[0] / 100;
-								}
-							}}
-						/>
+					<Slider
+						value={[volume]}
+						max={100}
+						step={1}
+						className='w-24 hover:cursor-grab active:cursor-grabbing [&_[role=slider]]:bg-customRed   [&_[role=slider]]:border [&_[role=slider]]:border-white'
+						onValueChange={(value) => {
+							const vol = value[0];
+							setVolume(vol);
+							setIsMuted(vol === 0);
+							if (audioRef.current) {
+							audioRef.current.volume = vol / 100;
+							}
+						}}
+					/>
+
 					</div>
 				</div>
 			</div>

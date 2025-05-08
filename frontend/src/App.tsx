@@ -10,6 +10,8 @@ import AlbumPage from "./pages/album/AlbumPage";
 import AdminPage from "./pages/admin/AdminPage";
 
 import { Toaster } from "react-hot-toast";
+import NotFoundPage from "./pages/NotFound/NotFoundPage";
+import LyricPage from "./pages/lyric/LyricPage";
 
 function App() {
 
@@ -26,6 +28,8 @@ function App() {
           <Route path ="/chat" element={<ChatPage />} />
           <Route path ="/liked-song" element={<LikedSongPage />} />
           <Route path ="albums/:albumId" element={<AlbumPage />} />
+          <Route path ="/*" element={<NotFoundPage />} />
+          <Route path ="/lyric" element={<LyricPage/>} />
         </Route>
       </Routes>
       <Toaster />
