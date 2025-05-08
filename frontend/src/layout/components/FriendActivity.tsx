@@ -6,16 +6,13 @@ import { HeadphonesIcon, Music, Users } from "lucide-react";
 import { useEffect } from "react";
 
 const FriendsActivity = () => {
-	// const { users, fetchUsers, onlineUsers, userActivities } = useChatStore();
-    const { users, fetchUsers } = useChatStore();
+	const { users, fetchUsers, onlineUsers, userActivities } = useChatStore();
 	const { user } = useUser();
 
 	useEffect(() => {
 		if (user) fetchUsers();
 	}, [fetchUsers, user]);
 
-    const isPlaying = true;
-    // nho sua lai
 	return (
 		<div className='h-full bg-zinc-900 rounded-lg flex flex-col'>
 			<div className='p-4 flex justify-between items-center border-b border-zinc-800'>
@@ -30,8 +27,8 @@ const FriendsActivity = () => {
 			<ScrollArea className='flex-1'>
 				<div className='p-4 space-y-4'>
 					{users.map((user) => {
-						// const activity = userActivities.get(user.clerkId);
-						// const isPlaying = activity && activity !== "Idle";
+						const activity = userActivities.get(user.clerkId);
+						const isPlaying = activity && activity !== "Idle";
 
 						return (
 							<div
@@ -44,14 +41,10 @@ const FriendsActivity = () => {
 											<AvatarImage src={user.imageUrl} alt={user.fullName} />
 											<AvatarFallback>{user.fullName[0]}</AvatarFallback>
 										</Avatar>
-										{/* <div
+										<div
 											className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-zinc-900 
 												${onlineUsers.has(user.clerkId) ? "bg-green-500" : "bg-zinc-500"}
 												`}
-											aria-hidden='true'
-										/> */}
-                                        <div
-											className={"absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-zinc-900 bg-zinc-500"}
 											aria-hidden='true'
 										/>
 									</div>
@@ -66,7 +59,7 @@ const FriendsActivity = () => {
                                                 <div className='flex items-end gap-2'>
                                                     {isPlaying && <Music className="size-4 text-customRed animate-bounce" />}
                                                     <div className='text-xs text-zinc-400 truncate'>
-                                                        {/* {activity.replace("Playing ", "").split(" by ")[0]} */} Cardiangan - {/* {activity.split(" by ")[1]} */}Toylor Swift
+                                                        {activity.replace("Playing ", "").split(" by ")[0]} - {activity.split(" by ")[1]}
                                                     </div>
                                                 </div>
 											</div>

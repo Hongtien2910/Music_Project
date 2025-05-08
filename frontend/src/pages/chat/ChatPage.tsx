@@ -1,13 +1,12 @@
 import Topbar from "@/components/Topbar";
 import { useChatStore } from "@/stores/useChatStore";
 import { useUser } from "@clerk/clerk-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import UsersList from "./components/UsersList";
 import ChatHeader from "./components/ChatHeader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import MessageInput from "./components/Messageinput";
-
+import MessageInput from "./components/MessageInput";
 
 
 const formatTime = (date: string) => {
@@ -21,6 +20,7 @@ const formatTime = (date: string) => {
 const ChatPage = () => {
 	const { user } = useUser();
 	const { messages, selectedUser, fetchUsers, fetchMessages } = useChatStore();
+	const bottomRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (user) fetchUsers();
@@ -30,22 +30,22 @@ const ChatPage = () => {
 		if (selectedUser) fetchMessages(selectedUser.clerkId);
 	}, [selectedUser, fetchMessages]);
 
-	console.log({ messages });
+	// Scroll xuống cuối mỗi khi messages thay đổi
+	useEffect(() => {
+		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, [messages]);
 
 	return (
 		<main className='h-full rounded-lg bg-gradient-to-b from-zinc-800 to-zinc-900 overflow-hidden'>
 			<Topbar />
-
 			<div className='grid lg:grid-cols-[300px_1fr] grid-cols-[80px_1fr] h-[calc(100vh-180px)]'>
 				<UsersList />
 
-				{/* chat message */}
 				<div className='flex flex-col h-full'>
 					{selectedUser ? (
 						<>
 							<ChatHeader />
 
-							{/* Messages */}
 							<ScrollArea className='h-[calc(100vh-340px)]'>
 								<div className='p-4 space-y-4'>
 									{messages.map((message) => (
@@ -77,6 +77,9 @@ const ChatPage = () => {
 											</div>
 										</div>
 									))}
+
+									{/* Dòng này giúp tự scroll xuống khi có tin nhắn mới */}
+									<div ref={bottomRef} />
 								</div>
 							</ScrollArea>
 
@@ -90,6 +93,7 @@ const ChatPage = () => {
 		</main>
 	);
 };
+
 export default ChatPage;
 
 const NoConversationPlaceholder = () => (
