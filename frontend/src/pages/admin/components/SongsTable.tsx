@@ -58,7 +58,7 @@ const SongsTable = () => {
 										<Button
 											variant={"ghost"}
 											size={"sm"}
-											className='text-red-400 hover:text-red-300 hover:bg-red-400/10'
+											className='text-customRed hover:text-customRed/40 hover:bg-red-400/10'
 											onClick={() => deleteSong(song._id)}
 										>
 											<Trash2 className='size-4' />

@@ -19,4 +19,4 @@ export const authCallback = async (req, res, next) => {
         console.error("Error in callback:", error);
         next(error);
       }
-}
+};

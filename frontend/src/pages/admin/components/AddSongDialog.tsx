@@ -35,20 +35,22 @@ const AddSongDialog = () => {
 		duration: "0",
 	});
 
-	const [files, setFiles] = useState<{ audio: File | null; image: File | null }>({
+	const [files, setFiles] = useState<{ audio: File | null; image: File | null; lyric: File | null  }>({
 		audio: null,
 		image: null,
+    lyric: null,
 	});
 
 	const audioInputRef = useRef<HTMLInputElement>(null);
 	const imageInputRef = useRef<HTMLInputElement>(null);
+  const lyricInputRef = useRef<HTMLInputElement>(null);
 
 	const handleSubmit = async () => {
 		setIsLoading(true);
 
 		try {
-			if (!files.audio || !files.image) {
-				return toast.error("Please upload both audio and image files");
+			if (!files.audio || !files.image || !files.lyric) {
+				return toast.error("Please upload both audio, image and lyric files");
 			}
 
 			const formData = new FormData();
@@ -62,6 +64,8 @@ const AddSongDialog = () => {
 
 			formData.append("audioFile", files.audio);
 			formData.append("imageFile", files.image);
+      formData.append("lyricFile", files.lyric);
+      
 
 			await axiosInstance.post("/admin/songs", formData, {
 				headers: {
@@ -79,6 +83,7 @@ const AddSongDialog = () => {
 			setFiles({
 				audio: null,
 				image: null,
+        lyric: null,
 			});
 			toast.success("Song added successfully");
 		} catch (error: any) {
@@ -119,7 +124,15 @@ const AddSongDialog = () => {
 						accept='image/*'
 						onChange={(e) => setFiles((prev) => ({ ...prev, image: e.target.files![0] }))}
 					/>
-
+  
+          <input
+            type='file'
+            ref={lyricInputRef}
+            className='hidden'
+            accept='.lrc'
+            onChange={(e) => setFiles((prev) => ({ ...prev, lyric: e.target.files![0] }))}
+          />
+  
 					{/* image upload area */}
 					<div
 						className='flex items-center justify-center p-6 border-2 border-dashed border-zinc-700 rounded-lg cursor-pointer'
@@ -154,6 +167,16 @@ const AddSongDialog = () => {
 							</Button>
 						</div>
 					</div>
+  
+            {/* Lyric upload */}
+            <div className='space-y-2'>
+              <label className='text-sm font-medium'>Lyric File (.lrc)</label>
+              <div className='flex items-center gap-2'>
+                <Button variant='outline' onClick={() => lyricInputRef.current?.click()} className='w-full'>
+                  {files.lyric ? files.lyric.name.slice(0, 20) : "Choose Lyric File"}
+                </Button>
+              </div>
+            </div>
 
 					{/* other fields */}
 					<div className='space-y-2'>

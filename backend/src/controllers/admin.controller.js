@@ -12,7 +12,7 @@ const uploadToCloudinary = async (file) => {
         console.error("Error uploading to Cloudinary", error);
         throw new Error("Cloudinary upload failed");
     }
-}
+};
 
 
 export const createSong = async (req, res, next) => {
@@ -53,7 +53,7 @@ export const createSong = async (req, res, next) => {
         console.log("Error in create Song", error);
         next(error);
     }
-}
+};
 
 export const deleteSong = async (req, res, next) => {
     try {
@@ -74,7 +74,7 @@ export const deleteSong = async (req, res, next) => {
         console.log("Error in delete Song", error);
         next(error);
     }
-}
+};
 
 export const createAlbum = async (req, res, next) => {
     try {
@@ -101,7 +101,7 @@ export const createAlbum = async (req, res, next) => {
         console.log("Error in create Album", error);
         next(error);
     }
-}
+};
 
 export const deleteAlbum = async (req, res, next) => {
     try {
@@ -116,8 +116,8 @@ export const deleteAlbum = async (req, res, next) => {
         console.log("Error in delete Album", error);
         next(error);
     }
-}
+};
 
 export const checkAdmin = async (req, res, next) => {
     res.status(200).json({ admin: true });
-}
+};
