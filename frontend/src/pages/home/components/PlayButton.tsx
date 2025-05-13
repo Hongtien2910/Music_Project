@@ -7,7 +7,10 @@ const PlayButton = ({ song }: { song: Song }) => {
 	const { currentSong, isPlaying, setCurrentSong, togglePlay } = usePlayerStore();
 	const isCurrentSong = currentSong?._id === song._id;
 
-	const handlePlay = () => {
+	const handlePlay = (e: React.MouseEvent) => {
+		e.stopPropagation(); 
+		e.preventDefault(); 
+
 		if (isCurrentSong) togglePlay();
 		else setCurrentSong(song);
 	};

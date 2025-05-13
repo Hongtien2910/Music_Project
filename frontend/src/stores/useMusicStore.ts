@@ -9,7 +9,7 @@ interface MusicStore {
     isLoading: boolean;
     error: string | null;
     currentAlbum: Album | null;
-    currentSong: Song | null;
+    currentSongM: Song | null;
 
     fetchAlbums: () => Promise<void>;
     fetchAlbumById: (albumId: string) => Promise<void>;
@@ -36,7 +36,7 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
     isLoading: false,
     error: null,
     currentAlbum: null,
-    currentSong: null,
+    currentSongM: null,
     madeForYouSongs: [],
 	featuredSongs: [],
 	trendingSongs: [],
@@ -88,7 +88,12 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
         set({ isLoading: true, error: null });
         try {
             const response = await axiosInstance.get(`/songs/${songId}`);
-            set({ currentSong: response.data });
+            set({
+				currentSongM: {
+					...response.data,
+					albumTitle: response.data.albumId?.title || null
+				}
+			});
         } catch (error: any) {
             set({ error: error.response?.data?.message || 'Lỗi khi tải bài hát' });
         }

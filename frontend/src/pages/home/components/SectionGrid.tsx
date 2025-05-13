@@ -2,6 +2,7 @@ import { Song } from "@/types";
 import { Button } from "@/components/ui/button";
 import SectionGridSkeleton from "./SectionGridSkeleton ";
 import PlayButton from "./PlayButton.tsx";
+import { Link } from "react-router-dom";
 
 type SectionGridProps = {
 	title: string;
@@ -22,7 +23,8 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
 
 			<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
 				{songs.map((song) => (
-					<div
+					<Link
+						to={`/songs/${song._id}`}
 						key={song._id}
 						className='bg-zinc-800/40 p-4 rounded-md hover:bg-zinc-700/40 transition-all group cursor-pointer'
 					>
@@ -39,7 +41,7 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
 						</div>
 						<h3 className='font-medium mb-2 truncate'>{song.title}</h3>
 						<p className='text-sm text-zinc-400 truncate'>{song.artist}</p>
-					</div>
+					</Link>
 				))}
 			</div>
 		</div>

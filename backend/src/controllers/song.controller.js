@@ -83,3 +83,17 @@ export const getTrendingSongs = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getSongById = async (req, res, next) => {
+    try {
+        const { songId } = req.params;
+        const song = await Song.findById(songId).populate("albumId", "title");
+        if (!song) {
+            return res.status(404).json({ message: "Song not found" });
+        }
+        res.status(200).json(song);
+    } catch (error) {
+        console.log("Error in getSongById", error);
+        next(error);
+    }
+};

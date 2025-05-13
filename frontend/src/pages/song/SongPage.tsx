@@ -1,0 +1,173 @@
+import { Button } from "@/components/ui/button";
+import { useMusicStore } from "@/stores/useMusicStore";
+import { usePlayerStore } from "@/stores/usePlayerStore";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Clock, Pause, Play } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+
+export const formatDuration = (seconds: number) => {
+	const minutes = Math.floor(seconds / 60);
+	const remainingSeconds = seconds % 60;
+	return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
+
+const parseLRC = (lrc: string) => {
+	const lines = lrc.split("\n");
+	const parsed = lines
+		.map((line) => {
+			const match = line.match(/\[(\d+):(\d+\.\d+)\](.*)/);
+			if (!match) return null;
+			const [, min, sec, text] = match;
+			const time = parseInt(min) * 60 + parseFloat(sec);
+			return { time, text: text.trim() };
+		})
+		.filter(Boolean);
+	return parsed;
+};
+
+const SongPage = () => {
+	const { songId } = useParams();
+	const navigate = useNavigate();  
+	const { fetchSongById, currentSongM, isLoading } = useMusicStore();
+	const { currentSong, isPlaying, playAlbum, togglePlay } = usePlayerStore();
+
+	// Lưu trữ lyrics sau khi tải từ URL
+	const [lyrics, setLyrics] = useState<any[]>([]);
+
+	useEffect(() => {
+		if (songId) {
+			console.log("Fetching song with id: ", songId);
+			fetchSongById(songId);
+		}
+	}, [fetchSongById, songId]);
+
+	// Tải lyrics từ URL nếu có
+	useEffect(() => {
+		const loadLyrics = async () => {
+			if (currentSongM?.lyricUrl) {
+				try {
+					const response = await fetch(currentSongM.lyricUrl);
+					const lrcText = await response.text();
+					const parsedLyrics = parseLRC(lrcText);
+					setLyrics(parsedLyrics);
+				} catch (error) {
+					console.error("Error loading lyrics:", error);
+					setLyrics([]); // Nếu lỗi, không có lyrics
+				}
+			}
+		};
+
+		loadLyrics();
+	}, [currentSongM]);
+
+	// Hàm Play song
+    const handlePlaySong = () => {
+        if (!currentSongM) return; // đảm bảo không null trước khi play
+
+        if (isPlaying) {
+            togglePlay();
+        } else {
+            playAlbum([currentSongM], 0);
+        }
+    };
+
+	const isCurrentSongPlaying = isPlaying && currentSong?._id === currentSongM?._id;
+
+	// Định dạng lời bài hát
+	const parsedLyrics = lyrics;
+
+	if (isLoading || !currentSongM) return null;
+
+	// Hàm điều hướng tới trang album
+	const handleNavigateToAlbum = () => {
+		if (currentSongM?.albumId) {
+			navigate(`/albums/${currentSongM.albumId}`); 
+		}
+	};
+
+	return (
+		<div className="h-full">
+			<ScrollArea className="h-full rounded-md">
+				<div className="relative min-h-full">
+					<div
+						className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-customRed/80 via-zinc-900 to-zinc-900 pointer-events-none"
+						aria-hidden="true"
+					/>
+                    <div
+						className="absolute top-[600px] left-0 right-0 bottom-0 bg-zinc-900 pointer-events-none"
+						aria-hidden="true"
+					/>
+					<div className="relative z-10 p-6 space-y-6">
+
+						{/* Info */}
+						<div className="flex gap-6">
+							<img
+								src={currentSongM.imageUrl}
+								alt={currentSongM.title}
+								className="w-[240px] h-[240px] shadow-xl rounded"
+							/>
+							<div className="flex flex-col justify-end">
+								<p className="text-sm font-medium">Song</p>
+								<h1 className="text-5xl font-bold my-4">{currentSongM.title}</h1>
+								<div className="text-sm text-zinc-100 flex gap-2">
+									<span className="font-medium text-white">{currentSongM.artist}</span>
+									{currentSongM.albumTitle && <span>• {currentSongM.albumTitle}</span>}
+									{currentSongM.createdAt && <span>• {currentSongM.createdAt.split("T")[0]}</span>}
+								</div>
+								<div className="mt-4">
+									<Button
+										onClick={handlePlaySong}
+										size="icon"
+										className="w-14 h-14 rounded-full border border-white bg-customRed hover:bg-red-800 hover:scale-105 transition-all">
+										{isCurrentSongPlaying ? (
+											<Pause className="h-7 w-7 text-white fill-white" />
+										) : (
+											<Play className="h-7 w-7 text-white fill-white" />
+										)}
+									</Button>
+								</div>
+							</div>
+						</div>
+
+						{/* Lyrics */}
+						<div className="bg-black/20 backdrop-blur-sm p-6 rounded-md">
+							<h2 className="text-xl font-semibold text-white mb-4">Lyrics</h2>
+							<div className="space-y-1 text-zinc-200 text-sm">
+								{parsedLyrics.length > 0 ? (
+									parsedLyrics.map((line, index) => (
+										<div key={index}>
+											{/* <span className="text-zinc-500 mr-2">
+												[{formatDuration(Math.floor(line && line.time))}]
+											</span> */}
+											{line && line.text}
+										</div>
+									))
+								) : (
+									<p className="italic text-zinc-400">Không có lời bài hát.</p>
+								)}
+							</div>
+						</div>
+
+						{/* Duration and Album */}
+						<div className="text-sm text-zinc-400 flex items-center gap-2">
+							<Clock className="h-4 w-4" />
+							<span>{formatDuration(currentSongM.duration)}</span>
+						</div>
+                        <div className="mt-4 flex justify-center">
+                            {currentSongM?.albumTitle && (
+                                <Button
+                                    onClick={handleNavigateToAlbum}
+                                    className="w-64 border-2 border-customRed text-customRed bg-zinc-900 hover:bg-zinc-800 hover:border-red-800 transition-all py-2">
+                                    Xem Album: {currentSongM.albumTitle}
+                                </Button>
+                            )}
+                        </div>
+					</div>
+				</div>
+			</ScrollArea>
+		</div>
+	);
+};
+
+export default SongPage;

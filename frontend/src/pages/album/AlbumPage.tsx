@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { useMusicStore } from "@/stores/useMusicStore";
 import { usePlayerStore } from "@/stores/usePlayerStore";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Clock, Pause, Play } from "lucide-react";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { Info } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const formatDuration = (seconds: number) => {
 	const minutes = Math.floor(seconds / 60);
@@ -16,6 +18,11 @@ const AlbumPage = () => {
     const {albumId} = useParams();
     const { fetchAlbumById, currentAlbum, isLoading } = useMusicStore();
 	const {currentSong, isPlaying, playAlbum, togglePlay} = usePlayerStore();
+	const navigate = useNavigate();
+
+	const handleNavigateToSongPage = (songId: string) => {
+		navigate(`/songs/${songId}`);
+	};
 
     useEffect(() => {
         if (albumId) fetchAlbumById(albumId!);
@@ -39,6 +46,8 @@ const AlbumPage = () => {
 
 		playAlbum(currentAlbum?.songs, index);
 	};
+
+
     return (
 		<div className='h-full'>
 			<ScrollArea className='h-full rounded-md'>
@@ -46,13 +55,16 @@ const AlbumPage = () => {
 				<div className='relative min-h-full'>
 					{/* bg gradient */}
 					<div
-						className='absolute inset-0 bg-gradient-to-b from-customRed/80 via-zinc-900/80
-					 to-zinc-900 pointer-events-none'
-						aria-hidden='true'
+						className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-customRed/80 via-zinc-900 to-zinc-900 pointer-events-none"
+						aria-hidden="true"
 					/>
-
+					<div
+						className="absolute top-[600px] left-0 right-0 bottom-0 bg-zinc-900 pointer-events-none"
+						aria-hidden="true"
+					/>
 					{/* Content */}
 					<div className='relative z-10'>
+
 						<div className='flex p-6 gap-6 pb-8'>
 							<img
 								src={currentAlbum?.imageUrl}
@@ -142,7 +154,16 @@ const AlbumPage = () => {
 													</div>
 												</div>
 												<div className='flex items-center'>{song.createdAt.split("T")[0]}</div>
-												<div className='flex items-center'>{formatDuration(song.duration)}</div>
+												<div className='flex items-center gap-2'>
+													<span>{formatDuration(song.duration)}</span>
+													<Info
+														className='ml-4 w-4 h-4 cursor-pointer text-zinc-400 hover:text-white transition'
+														onClick={(e) => {
+															e.stopPropagation();
+															handleNavigateToSongPage(song._id);
+														}}
+													/>
+												</div>
 											</div>
 										);
 									})}
