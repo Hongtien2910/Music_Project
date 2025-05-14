@@ -81,9 +81,18 @@ const SongPage = () => {
 
 	// Hàm điều hướng tới trang album
 	const handleNavigateToAlbum = () => {
-		if (currentSongM?.albumId) {
-			navigate(`/albums/${currentSongM.albumId}`); 
-		}
+	const albumId = currentSongM?.albumId;
+
+	const id =
+		typeof albumId === "object" && albumId !== null
+		? (albumId as { _id: string })._id
+		: albumId;
+
+	if (id) {
+		navigate(`/albums/${id}`);
+	} else {
+		console.warn("Không thể điều hướng: albumId không hợp lệ", albumId);
+	}
 	};
 
 	return (
@@ -155,13 +164,14 @@ const SongPage = () => {
 							<span>{formatDuration(currentSongM.duration)}</span>
 						</div>
                         <div className="mt-4 flex justify-center">
-                            {currentSongM?.albumTitle && (
-                                <Button
-                                    onClick={handleNavigateToAlbum}
-                                    className="w-64 border-2 border-customRed text-customRed bg-zinc-900 hover:bg-zinc-800 hover:border-red-800 transition-all py-2">
-                                    Xem Album: {currentSongM.albumTitle}
-                                </Button>
-                            )}
+                           {(currentSongM?.albumTitle || currentSongM?.albumId) && (
+								<Button
+									onClick={handleNavigateToAlbum}
+									className="w-64 border-2 border-white text-white bg-customRed hover:bg-zinc-800 hover:border-red-800 transition-all py-2"
+								>
+									Go to Album: {currentSongM.albumTitle || "View"}
+								</Button>
+							)}
                         </div>
 					</div>
 				</div>
