@@ -5,16 +5,19 @@ import FeaturedSection from "./components/FeaturedSection";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import SectionGrid from "./components/SectionGrid";
 import { usePlayerStore } from "@/stores/usePlayerStore";
+import SectionGridAlbum from "./components/SectionGridAlbum";
 
 const HomePage = () => {
 
   const {fetchFeaturedSongs, 
         fetchMadeForYouSongs, 
         fetchTrendingSongs, 
+        fetchRandomAlbums,
         isLoading, 
         madeForYouSongs, 
         featuredSongs, 
-        trendingSongs} = useMusicStore();
+        trendingSongs,
+        randomAlbums} = useMusicStore();
 
   const {initializeQueue} = usePlayerStore();
 
@@ -22,7 +25,8 @@ const HomePage = () => {
     fetchFeaturedSongs();
     fetchMadeForYouSongs();
     fetchTrendingSongs();
-  }, [fetchFeaturedSongs, fetchMadeForYouSongs, fetchTrendingSongs]);
+    fetchRandomAlbums();
+  }, [fetchFeaturedSongs, fetchMadeForYouSongs, fetchTrendingSongs, fetchRandomAlbums]);
 
 	useEffect(() => {
 		if (madeForYouSongs.length > 0 && featuredSongs.length > 0 && trendingSongs.length > 0) {
@@ -43,6 +47,13 @@ const HomePage = () => {
 						<SectionGrid title='Made For You' songs={madeForYouSongs} isLoading={isLoading} />
 						<SectionGrid title='Trending' songs={trendingSongs} isLoading={isLoading} />
 					</div>
+          <div className="my-8">
+            <SectionGridAlbum 
+              title="Random Albums" 
+              albums={randomAlbums}
+              isLoading={isLoading} 
+            />
+          </div>
 				</div>
 			</ScrollArea>
     </main>

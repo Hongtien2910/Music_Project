@@ -90,7 +90,7 @@ const LeftSidebar = () => {
                         <span className = "text-lg font-semibold">All Albums</span>
                     </div>
                 </div>
-                <ScrollArea className = "h-[calc(100vh-300px)]">
+                <ScrollArea className = "h-[calc(100vh-460px)]">
                     <div className="space-y-2">
                         {isLoading ? (
                             <SongSkeleton />

@@ -31,6 +31,9 @@ interface MusicStore {
 
 	fetchRecommendedSong: (songName: string) => Promise<void>;
 	recommendedSongs: Song[];
+
+	randomAlbums: Album[];
+	fetchRandomAlbums: () => Promise<void>;
 }
 
 export const useMusicStore = create<MusicStore>((set, get) => ({
@@ -44,6 +47,7 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 	featuredSongs: [],
 	trendingSongs: [],
 	recommendedSongs: [],
+	randomAlbums: [],
 
     stats: {
 		totalSongs: 0,
@@ -205,6 +209,17 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 		} catch (error: any) {
 			console.error("Lỗi khi gọi fetchRecommendedSong:", error);
 			set({ error: error.response?.data?.message || "Lỗi khi gợi ý bài hát" });
+		} finally {
+			set({ isLoading: false });
+		}
+	},
+	fetchRandomAlbums: async () => {
+		set({ isLoading: true, error: null });
+		try {
+			const response = await axiosInstance.get('/albums/randomAlbum');
+			set({ randomAlbums: response.data });
+		} catch (error: any) {
+			set({ error: error.response?.data?.message || 'Lỗi khi tải album ngẫu nhiên' });
 		} finally {
 			set({ isLoading: false });
 		}

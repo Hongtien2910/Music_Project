@@ -111,9 +111,8 @@ export const getRecommendedSongs = async (req, res, next) => {
 export const getTrendingSongs = async (req, res, next) => {
     try {
         const songs = await Song.aggregate([
-            {
-                $sample:{size:4}
-            },
+            { $sort: { plays: -1 } },
+            { $limit: 4 }, 
             {
                 $project: {
                     _id: 1,
@@ -122,9 +121,11 @@ export const getTrendingSongs = async (req, res, next) => {
                     imageUrl: 1,
                     audioUrl: 1,
                     lyricUrl: 1,
+                    plays: 1,
                 }
             }
-        ])
+        ]);
+
         res.status(200).json(songs);
     } catch (error) {
         console.log("Error in getTrendingSongs", error);
@@ -144,4 +145,21 @@ export const getSongById = async (req, res, next) => {
         console.log("Error in getSongById", error);
         next(error);
     }
+};
+
+export const incrementPlays = async (req, res, next) => {
+  try {
+    const songId = req.params.id;
+
+    const song = await Song.findById(songId);
+    if (!song) return res.status(404).json({ message: 'Bài hát không tồn tại' });
+
+    song.plays = (song.plays || 0) + 1;
+    await song.save();
+
+    res.status(200).json({ plays: song.plays });
+  } catch (error) {
+    console.error('Lỗi khi tăng lượt nghe:', error);
+    next(error);
+  }
 };

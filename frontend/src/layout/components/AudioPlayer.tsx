@@ -1,12 +1,33 @@
 import { usePlayerStore } from "@/stores/usePlayerStore";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const AudioPlayer = () => {
 	const audioRef = useRef<HTMLAudioElement>(null);
 	const prevSongRef = useRef<string | null>(null);
 
+	const [hasCountedPlay, setHasCountedPlay] = useState(false);
+
 	const { currentSong, isPlaying, playNext } = usePlayerStore();
 
+	// Tăng lượt nghe khi nghe đủ 30 giây
+	const handleTimeUpdate = async () => {
+		if (
+		!hasCountedPlay &&
+		audioRef.current &&
+		audioRef.current.currentTime >= 30 &&
+		currentSong
+		) {
+		setHasCountedPlay(true);
+		try {
+			await fetch(`/songs/${currentSong._id}/increment-plays`, {
+			method: "PATCH",
+			});
+			console.log("Đã tăng lượt nghe");
+		} catch (error) {
+			console.error("Lỗi khi tăng lượt nghe", error);
+		}
+		}
+	};
 	// handle play/pause logic
 	useEffect(() => {
 		if (isPlaying) audioRef.current?.play();
@@ -38,13 +59,13 @@ const AudioPlayer = () => {
 			audio.src = currentSong?.audioUrl;
 			// reset the playback position
 			audio.currentTime = 0;
-
+			setHasCountedPlay(false);
 			prevSongRef.current = currentSong?.audioUrl;
 
 			if (isPlaying) audio.play();
 		}
 	}, [currentSong, isPlaying]);
 
-	return <audio ref={audioRef} />;
+	return <audio ref={audioRef} onTimeUpdate={handleTimeUpdate} />;
 };
 export default AudioPlayer;

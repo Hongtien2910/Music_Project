@@ -162,7 +162,7 @@ const SongPage = () => {
 									</div>
 									))
 								) : (
-									<p className="italic text-zinc-400">Không có lời bài hát.</p>
+									<p className="italic text-zinc-400">No lyrics.</p>
 								)}
 							</div>
 						</div>

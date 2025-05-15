@@ -13,6 +13,7 @@ import { Toaster } from "react-hot-toast";
 import NotFoundPage from "./pages/NotFound/NotFoundPage";
 import LyricPage from "./pages/lyric/LyricPage";
 import SongPage from "./pages/song/SongPage";
+import ShowAllSong from "./pages/song/ShowAllSong";
 
 function App() {
 
@@ -32,6 +33,7 @@ function App() {
           <Route path ="/*" element={<NotFoundPage />} />
           <Route path ="/lyric" element={<LyricPage/>} />
           <Route path ="songs/:songId" element={<SongPage />} />
+          <Route path ="/songs" element={<ShowAllSong />} />
         </Route>
       </Routes>
       <Toaster />
