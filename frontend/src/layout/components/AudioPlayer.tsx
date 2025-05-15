@@ -2,70 +2,77 @@ import { usePlayerStore } from "@/stores/usePlayerStore";
 import { useEffect, useRef, useState } from "react";
 
 const AudioPlayer = () => {
-	const audioRef = useRef<HTMLAudioElement>(null);
-	const prevSongRef = useRef<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const prevSongRef = useRef<string | null>(null);
 
-	const [hasCountedPlay, setHasCountedPlay] = useState(false);
+  const [hasCountedPlay, setHasCountedPlay] = useState(false);
 
-	const { currentSong, isPlaying, playNext } = usePlayerStore();
+  const { currentSong, isPlaying, playNext, setCurrentTime } = usePlayerStore();
 
-	// Tăng lượt nghe khi nghe đủ 30 giây
-	const handleTimeUpdate = async () => {
-		if (
-		!hasCountedPlay &&
-		audioRef.current &&
-		audioRef.current.currentTime >= 30 &&
-		currentSong
-		) {
-		setHasCountedPlay(true);
-		try {
-			await fetch(`/songs/${currentSong._id}/increment-plays`, {
-			method: "PATCH",
-			});
-			console.log("Đã tăng lượt nghe");
-		} catch (error) {
-			console.error("Lỗi khi tăng lượt nghe", error);
-		}
-		}
-	};
-	// handle play/pause logic
-	useEffect(() => {
-		if (isPlaying) audioRef.current?.play();
-		else audioRef.current?.pause();
-	}, [isPlaying]);
+  // Tăng lượt nghe khi nghe đủ 30 giây
+  const handleTimeUpdate = async () => {
+    if (
+      audioRef.current &&
+      currentSong
+    ) {
+      // Cập nhật thời gian hiện tại vào store
+      setCurrentTime(audioRef.current.currentTime);
 
-	// handle song ends
-	useEffect(() => {
-		const audio = audioRef.current;
+      if (
+        !hasCountedPlay &&
+        audioRef.current.currentTime >= 30
+      ) {
+        setHasCountedPlay(true);
+        try {
+          await fetch(`/songs/${currentSong._id}/increment-plays`, {
+            method: "PATCH",
+          });
+          console.log("Đã tăng lượt nghe");
+        } catch (error) {
+          console.error("Lỗi khi tăng lượt nghe", error);
+        }
+      }
+    }
+  };
 
-		const handleEnded = () => {
-			playNext();
-		};
+  // handle play/pause logic
+  useEffect(() => {
+    if (isPlaying) audioRef.current?.play();
+    else audioRef.current?.pause();
+  }, [isPlaying]);
 
-		audio?.addEventListener("ended", handleEnded);
+  // handle song ends
+  useEffect(() => {
+    const audio = audioRef.current;
 
-		return () => audio?.removeEventListener("ended", handleEnded);
-	}, [playNext]);
+    const handleEnded = () => {
+      playNext();
+    };
 
-	// handle song changes
-	useEffect(() => {
-		if (!audioRef.current || !currentSong) return;
+    audio?.addEventListener("ended", handleEnded);
 
-		const audio = audioRef.current;
+    return () => audio?.removeEventListener("ended", handleEnded);
+  }, [playNext]);
 
-		// check if this is actually a new song
-		const isSongChange = prevSongRef.current !== currentSong?.audioUrl;
-		if (isSongChange) {
-			audio.src = currentSong?.audioUrl;
-			// reset the playback position
-			audio.currentTime = 0;
-			setHasCountedPlay(false);
-			prevSongRef.current = currentSong?.audioUrl;
+  // handle song changes
+  useEffect(() => {
+    if (!audioRef.current || !currentSong) return;
 
-			if (isPlaying) audio.play();
-		}
-	}, [currentSong, isPlaying]);
+    const audio = audioRef.current;
 
-	return <audio ref={audioRef} onTimeUpdate={handleTimeUpdate} />;
+    // check if this is actually a new song
+    const isSongChange = prevSongRef.current !== currentSong?.audioUrl;
+    if (isSongChange) {
+      audio.src = currentSong?.audioUrl;
+      // reset the playback position
+      audio.currentTime = 0;
+      setHasCountedPlay(false);
+      prevSongRef.current = currentSong?.audioUrl;
+
+      if (isPlaying) audio.play();
+    }
+  }, [currentSong, isPlaying]);
+
+  return <audio ref={audioRef} onTimeUpdate={handleTimeUpdate} />;
 };
 export default AudioPlayer;

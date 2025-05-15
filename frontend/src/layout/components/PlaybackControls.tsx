@@ -65,9 +65,11 @@ export const PlaybackControls = () => {
 							/>
 							<div className='flex-1 min-w-0'>
 								<div className='font-medium truncate hover:underline cursor-pointer'>
+								<Link to={`/songs/${currentSong._id}`}>
 									{currentSong.title}
+								</Link>
 								</div>
-								<div className='text-sm text-zinc-400 truncate hover:underline cursor-pointer'>
+								<div className='text-sm text-zinc-400'>
 									{currentSong.artist}
 								</div>
 							</div>

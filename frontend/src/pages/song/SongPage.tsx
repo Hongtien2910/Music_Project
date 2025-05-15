@@ -49,10 +49,6 @@ const SongPage = () => {
 	}
 	}, [currentSongM?.title, fetchRecommendedSong]);
 
-	useEffect(() => {
-  console.log("recommendedSongs updated:", recommendedSongs);
-}, [recommendedSongs]);
-
 
 	// Tải lyrics từ URL nếu có
 	useEffect(() => {
@@ -74,15 +70,17 @@ const SongPage = () => {
 	}, [currentSongM]);
 
 	// Hàm Play song
-    const handlePlaySong = () => {
-        if (!currentSongM) return; // đảm bảo không null trước khi play
+	const handlePlaySong = () => {
+		if (!currentSongM) return;
 
-        if (isPlaying) {
-            togglePlay();
-        } else {
-            playAlbum([currentSongM], 0);
-        }
-    };
+		if (isPlaying && currentSong?._id === currentSongM._id) {
+			// Nếu bài hiện tại đang phát là bài này thì toggle play/pause
+			togglePlay();
+		} else {
+			// Nếu đang phát bài khác hoặc dừng thì phát bài này luôn
+			playAlbum([currentSongM], 0);
+		}
+	}
 
 	const isCurrentSongPlaying = isPlaying && currentSong?._id === currentSongM?._id;
 

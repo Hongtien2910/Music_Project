@@ -15,6 +15,9 @@ interface PlayerStore {
 	togglePlay: () => void;
 	playNext: () => void;
 	playPrevious: () => void;
+
+	currentTime: number;
+  	setCurrentTime: (time: number) => void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -22,6 +25,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 	isPlaying: false,
 	queue: [],
 	currentIndex: -1,
+	currentTime: 0,
+  	setCurrentTime: (time: number) => set({ currentTime: time }),
 
 	initializeQueue: (songs: Song[]) => {
 		set({

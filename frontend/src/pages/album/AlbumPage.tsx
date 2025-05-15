@@ -50,12 +50,12 @@ const AlbumPage = () => {
 
     return (
 		<div className='h-full'>
-			<ScrollArea className='h-full rounded-md'>
+			{/* <ScrollArea className='h-full rounded-md'> */}
 				{/* Main Content */}
 				<div className='relative min-h-full'>
 					{/* bg gradient */}
 					<div
-						className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-customRed/80 via-zinc-900 to-zinc-900 pointer-events-none"
+						className="absolute top-0 left-0 right-0 h-[642px] bg-gradient-to-b from-customRed/80 via-zinc-900 to-zinc-900 pointer-events-none rounded-lg"
 						aria-hidden="true"
 					/>
 					<div
@@ -113,6 +113,7 @@ const AlbumPage = () => {
 							{/* songs list */}
 
 							<div className='px-6'>
+								<ScrollArea className="h-[400px] rounded-md">
 								<div className='space-y-2 py-4'>
 									{currentAlbum?.songs.map((song, index) => {
 										const isCurrentSong = currentSong?._id === song._id;
@@ -168,11 +169,12 @@ const AlbumPage = () => {
 										);
 									})}
 								</div>
+								</ScrollArea>
 							</div>
 						</div>
 					</div>
 				</div>
-			</ScrollArea>
+			{/* </ScrollArea> */}
 		</div>
 	);
 };
