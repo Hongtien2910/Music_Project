@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Clock, Pause, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import SectionGrid from "./components/SectionGrid";
 
 export const formatDuration = (seconds: number) => {
 	const minutes = Math.floor(seconds / 60);
@@ -29,18 +30,29 @@ const parseLRC = (lrc: string) => {
 const SongPage = () => {
 	const { songId } = useParams();
 	const navigate = useNavigate();  
-	const { fetchSongById, currentSongM, isLoading } = useMusicStore();
+	const { fetchSongById, currentSongM, isLoading, recommendedSongs, fetchRecommendedSong } = useMusicStore();
 	const { currentSong, isPlaying, playAlbum, togglePlay } = usePlayerStore();
 
 	// Lưu trữ lyrics sau khi tải từ URL
 	const [lyrics, setLyrics] = useState<any[]>([]);
 
 	useEffect(() => {
-		if (songId) {
-			console.log("Fetching song with id: ", songId);
-			fetchSongById(songId);
-		}
+	if (songId) {
+		console.log("Fetching song with id: ", songId);
+		fetchSongById(songId);
+	}
 	}, [fetchSongById, songId]);
+
+	useEffect(() => {
+	if (currentSongM?.title) {
+		fetchRecommendedSong(currentSongM.title);
+	}
+	}, [currentSongM?.title, fetchRecommendedSong]);
+
+	useEffect(() => {
+  console.log("recommendedSongs updated:", recommendedSongs);
+}, [recommendedSongs]);
+
 
 	// Tải lyrics từ URL nếu có
 	useEffect(() => {
@@ -144,13 +156,10 @@ const SongPage = () => {
 							<h2 className="text-xl font-semibold text-white mb-4">Lyrics</h2>
 							<div className="space-y-1 text-zinc-200 text-sm">
 								{parsedLyrics.length > 0 ? (
-									parsedLyrics.map((line, index) => (
-										<div key={index}>
-											{/* <span className="text-zinc-500 mr-2">
-												[{formatDuration(Math.floor(line && line.time))}]
-											</span> */}
-											{line && line.text}
-										</div>
+									parsedLyrics.map((line) => (
+									<div key={line.time}>
+										{line && line.text}
+									</div>
 									))
 								) : (
 									<p className="italic text-zinc-400">Không có lời bài hát.</p>
@@ -173,6 +182,17 @@ const SongPage = () => {
 								</Button>
 							)}
                         </div>
+						
+						{/* Recommended Songs */}
+						{recommendedSongs && recommendedSongs.length > 0 && (
+							<SectionGrid
+							title="Recommended Songs"
+							songs={recommendedSongs}
+							isLoading={isLoading}
+							columns="grid-cols-2"
+							/>
+						)}
+
 					</div>
 				</div>
 			</ScrollArea>

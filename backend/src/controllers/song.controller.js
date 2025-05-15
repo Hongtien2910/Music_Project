@@ -1,4 +1,5 @@
 import { Song } from "../models/song.model.js";
+import axios from "axios";
 
 export const getAllSongs = async (req, res, next) => {
     try {
@@ -59,6 +60,53 @@ export const getMadeForYouSongs = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getRecommendedSongs = async (req, res, next) => {
+  try {
+    
+    const { songName } = req.body;
+
+    if (!songName) {
+      return res.status(400).json({ message: "Thiếu tên bài hát" });
+    }
+
+    // Gọi API Python
+    const response = await axios.post("http://127.0.0.1:5000/recommend", {
+      song_name: songName
+    });
+
+    const recommendedSongs = response.data;
+
+    // Tìm các bài hát trong MongoDB
+    const mongoSongs = await Song.find({
+      title: { $in: recommendedSongs.map(song => song.name) }
+    });
+
+    // Kết hợp dữ liệu
+    const result = recommendedSongs.map(song => {
+      const mongoSong = mongoSongs.find(m => m.title === song.name);
+      return {
+        ...song,
+        mongoData: mongoSong ? {
+          _id: mongoSong._id,
+          title: mongoSong.title,
+          artist: mongoSong.artist,
+          imageUrl: mongoSong.imageUrl,
+          audioUrl: mongoSong.audioUrl,
+          lyricUrl: mongoSong.lyricUrl,
+          plays: mongoSong.plays,
+          duration: mongoSong.duration
+        } : null
+      };
+    });
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.log("Error in getRecommendedSongs", error);
+    next(error);
+  }
+};
+
 
 export const getTrendingSongs = async (req, res, next) => {
     try {

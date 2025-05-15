@@ -17,7 +17,7 @@ const uploadToCloudinary = async (file) => {
 
 export const createSong = async (req, res, next) => {
     try {
-        if (!req.files || !req.files.audioFile || !req.files.imageFile || !req.files.lyricFile) {  
+        if (!req.files || !req.files.audioFile || !req.files.imageFile) {  
             return res.status(400).json({ message: "Please upload all files" });
         }
 

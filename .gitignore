@@ -13,4 +13,5 @@ node_modules/
 frontend/public/albums/
 frontend/public/cover-images/
 frontend/public/songs/
+frontend/public/lyrics/
 tmp/

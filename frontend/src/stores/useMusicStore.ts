@@ -28,6 +28,9 @@ interface MusicStore {
 
 	deleteSong: (id: string) => Promise<void>;
 	deleteAlbum: (id: string) => Promise<void>;
+
+	fetchRecommendedSong: (songName: string) => Promise<void>;
+	recommendedSongs: Song[];
 }
 
 export const useMusicStore = create<MusicStore>((set, get) => ({
@@ -40,6 +43,7 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
     madeForYouSongs: [],
 	featuredSongs: [],
 	trendingSongs: [],
+	recommendedSongs: [],
 
     stats: {
 		totalSongs: 0,
@@ -186,6 +190,21 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 			toast.success("Album deleted successfully");
 		} catch (error: any) {
 			toast.error("Failed to delete album: " + error.message);
+		} finally {
+			set({ isLoading: false });
+		}
+	},
+	
+	fetchRecommendedSong: async (songName: string) => {
+		set({ isLoading: true, error: null });
+		try {
+			const response = await axiosInstance.post("/songs/recommend", {
+			songName
+			});
+			set({ recommendedSongs: response.data });
+		} catch (error: any) {
+			console.error("Lỗi khi gọi fetchRecommendedSong:", error);
+			set({ error: error.response?.data?.message || "Lỗi khi gợi ý bài hát" });
 		} finally {
 			set({ isLoading: false });
 		}

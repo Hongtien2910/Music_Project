@@ -19,7 +19,7 @@ const songSchema = new mongoose.Schema( {
     },
     lyricUrl: {
         type: String,
-        required: true,
+        required: false,
     },
     duration: {
         type: String,
