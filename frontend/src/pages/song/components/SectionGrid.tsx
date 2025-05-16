@@ -21,7 +21,7 @@ const mappedSongs: Song[] = songs.map((song) => ({
   audioUrl: song.mongoData?.audioUrl || song.link || "",
   createdAt: song.mongoData?.createdAt || new Date().toISOString(),
   updatedAt: song.mongoData?.updatedAt || new Date().toISOString(),
-  title: song.mongoData?.title || song.name || "Unknown Title",
+  title: song.mongoData?.title || song.title || "Unknown Title",
   artist: song.mongoData?.artist || song.artist || "Unknown Artist",
   imageUrl: song.mongoData?.imageUrl || song.imageUrl || "",
   duration: Number(song.mongoData?.duration || song.duration ||  0),

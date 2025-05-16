@@ -107,6 +107,52 @@ export const getRecommendedSongs = async (req, res, next) => {
   }
 };
 
+export const recognizeSongFromAudio = async (req, res, next) => {
+  try {
+    // req.file hoặc req.files tùy middleware upload bạn dùng (multer, formidable, ...)
+    if (!req.file) {
+      return res.status(400).json({ message: "Thiếu file audio" });
+    }
+
+    // Tạo FormData để gửi file audio đến server python
+    const formData = new FormData();
+    formData.append('audio', req.file.buffer, req.file.originalname);
+
+    // Gọi API python
+    const response = await axios.post('http://127.0.0.1:5001/recognize', formData, {
+      headers: {
+        ...formData.getHeaders(),
+      },
+    });
+
+    const { SONG_NAME } = response.data;
+
+    if (!SONG_NAME) {
+      return res.status(404).json({ message: "Không tìm thấy bài hát từ audio" });
+    }
+
+    // Tìm bài hát trong MongoDB theo tên trả về
+    const mongoSong = await Song.findOne({ title: SONG_NAME });
+
+    if (!mongoSong) {
+      return res.status(404).json({ message: "Không tìm thấy bài hát trong hệ thống" });
+    }
+
+    return res.status(200).json({
+      _id: mongoSong._id,
+      title: mongoSong.title,
+      artist: mongoSong.artist,
+      imageUrl: mongoSong.imageUrl,
+      audioUrl: mongoSong.audioUrl,
+      lyricUrl: mongoSong.lyricUrl,
+      plays: mongoSong.plays,
+      duration: mongoSong.duration,
+    });
+  } catch (error) {
+    console.error("Error in recognizeSongFromAudio", error);
+    next(error);
+  }
+};
 
 export const getTrendingSongs = async (req, res, next) => {
     try {

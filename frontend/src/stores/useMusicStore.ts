@@ -34,6 +34,10 @@ interface MusicStore {
 
 	randomAlbums: Album[];
 	fetchRandomAlbums: () => Promise<void>;
+
+	searchedSongs: Song[];   // Kết quả tìm kiếm theo audio
+    searchedAlbums: Album[]; // Kết quả tìm kiếm theo audio
+    searchByAudio: (file: File) => Promise<void>;  // Hàm tìm kiếm audio
 }
 
 export const useMusicStore = create<MusicStore>((set, get) => ({
@@ -48,6 +52,9 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 	trendingSongs: [],
 	recommendedSongs: [],
 	randomAlbums: [],
+	searchedSongs: [],
+    searchedAlbums: [],
+
 
     stats: {
 		totalSongs: 0,
@@ -224,4 +231,43 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 			set({ isLoading: false });
 		}
 	},
+
+
+	searchByAudio: async (file: File) => {
+		set({ isLoading: true, error: null });
+		try {
+			// 1. Tạo form data để gửi file audio lên server Python
+			const formData = new FormData();
+			formData.append('audio', file);
+
+			// 2. Gọi API nhận diện âm thanh (Python)
+			const recogResponse = await axiosInstance.post('/songs/recoginize', formData, {
+			headers: {
+				'Content-Type': 'multipart/form-data',
+			},
+			});
+
+			// 3. Lấy tên bài hát từ kết quả nhận diện
+			const songName = recogResponse.data.SONG_NAME;
+				if (!songName) {
+					throw new Error('Không tìm thấy tên bài hát từ file âm thanh');
+			}
+
+			// 4. Gọi API recommend để lấy danh sách bài hát tương tự dựa trên songName
+			const recommendResponse = await axiosInstance.post('/songs/recommend', { songName });
+
+			// 5. Cập nhật searchedSongs và searchedAlbums (nếu có)
+			set({
+				searchedSongs: recommendResponse.data,
+				searchedAlbums: [],  // hoặc bạn có thể fetch thêm albums nếu muốn
+				isLoading: false,
+			});
+		} catch (error: any) {
+			set({
+				error: error.response?.data?.message || error.message || 'Lỗi khi tìm kiếm theo audio',
+				isLoading: false,
+			});
+		}
+	},
+
 }));
