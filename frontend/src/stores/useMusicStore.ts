@@ -35,9 +35,8 @@ interface MusicStore {
 	randomAlbums: Album[];
 	fetchRandomAlbums: () => Promise<void>;
 
-	searchedSongs: Song[];   // Kết quả tìm kiếm theo audio
-    searchedAlbums: Album[]; // Kết quả tìm kiếm theo audio
-    searchByAudio: (file: File) => Promise<void>;  // Hàm tìm kiếm audio
+	searchedSongs: Song[]; 
+    searchByAudio: (file: File) => Promise<void>;
 }
 
 export const useMusicStore = create<MusicStore>((set, get) => ({
@@ -53,7 +52,6 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 	recommendedSongs: [],
 	randomAlbums: [],
 	searchedSongs: [],
-    searchedAlbums: [],
 
 
     stats: {
@@ -234,32 +232,27 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 
 
 	searchByAudio: async (file: File) => {
-		set({ isLoading: true, error: null });
-		try {
-			// 1. Tạo form data để gửi file audio lên server Python
-			const formData = new FormData();
-			formData.append('audio', file);
+		set({ isLoading: true, error: null, searchedSongs: [] });
 
-			// 2. Gọi API nhận diện âm thanh (Python)
-			const recogResponse = await axiosInstance.post('/songs/recoginize', formData, {
+		try {
+			const formData = new FormData();
+			formData.append('file', file);
+
+			const recogResponse = await axiosInstance.post('/songs/recognize', formData, {
 			headers: {
-				'Content-Type': 'multipart/form-data',
+				"Content-Type": "multipart/form-data",
 			},
 			});
 
-			// 3. Lấy tên bài hát từ kết quả nhận diện
-			const songName = recogResponse.data.SONG_NAME;
-				if (!songName) {
-					throw new Error('Không tìm thấy tên bài hát từ file âm thanh');
+			const recognizedSong = recogResponse.data;
+
+			if (!recognizedSong || !recognizedSong.title) {
+			throw new Error('Không tìm thấy tên bài hát từ file âm thanh');
 			}
 
-			// 4. Gọi API recommend để lấy danh sách bài hát tương tự dựa trên songName
-			const recommendResponse = await axiosInstance.post('/songs/recommend', { songName });
-
-			// 5. Cập nhật searchedSongs và searchedAlbums (nếu có)
+			// Lưu kết quả tìm được vào store
 			set({
-				searchedSongs: recommendResponse.data,
-				searchedAlbums: [],  // hoặc bạn có thể fetch thêm albums nếu muốn
+				searchedSongs: [recognizedSong],
 				isLoading: false,
 			});
 		} catch (error: any) {

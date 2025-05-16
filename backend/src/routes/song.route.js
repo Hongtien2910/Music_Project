@@ -12,7 +12,7 @@ router.get("/made-for-you", getMadeForYouSongs);
 router.get("/trending", getTrendingSongs);
 router.get("/:songId", getSongById);
 router.post("/recommend", getRecommendedSongs);
-router.post("/recoginize", recognizeSongFromAudio);
+router.post("/recognize", recognizeSongFromAudio);
 router.patch('/:songId/increment-plays', incrementPlays);
 
 export default router;

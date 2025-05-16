@@ -1,5 +1,7 @@
 import { Song } from "../models/song.model.js";
 import axios from "axios";
+import fs from 'fs';
+import FormData from 'form-data';
 
 export const getAllSongs = async (req, res, next) => {
     try {
@@ -107,32 +109,28 @@ export const getRecommendedSongs = async (req, res, next) => {
   }
 };
 
-export const recognizeSongFromAudio = async (req, res, next) => {
+
+export const recognizeSongFromAudio = async (req, res) => {
   try {
-    // req.file hoặc req.files tùy middleware upload bạn dùng (multer, formidable, ...)
-    if (!req.file) {
-      return res.status(400).json({ message: "Thiếu file audio" });
+    if (!req.files || !req.files.file) {
+      return res.status(400).json({ message: "No have file audio" });
     }
 
-    // Tạo FormData để gửi file audio đến server python
-    const formData = new FormData();
-    formData.append('audio', req.file.buffer, req.file.originalname);
+    const file = req.files.file;
 
-    // Gọi API python
-    const response = await axios.post('http://127.0.0.1:5001/recognize', formData, {
-      headers: {
-        ...formData.getHeaders(),
-      },
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(file.tempFilePath), file.name);
+
+    const response = await axios.post("http://127.0.0.1:5001/recognize", formData, {
+      headers: formData.getHeaders(),
     });
 
     const { SONG_NAME } = response.data;
 
-    if (!SONG_NAME) {
-      return res.status(404).json({ message: "Không tìm thấy bài hát từ audio" });
-    }
+    // Loại bỏ phần đuôi như ".mp3"
+    const cleanTitle = SONG_NAME.replace(/\.[^/.]+$/, "");
 
-    // Tìm bài hát trong MongoDB theo tên trả về
-    const mongoSong = await Song.findOne({ title: SONG_NAME });
+    const mongoSong = await Song.findOne({ title: cleanTitle });
 
     if (!mongoSong) {
       return res.status(404).json({ message: "Không tìm thấy bài hát trong hệ thống" });
@@ -149,8 +147,8 @@ export const recognizeSongFromAudio = async (req, res, next) => {
       duration: mongoSong.duration,
     });
   } catch (error) {
-    console.error("Error in recognizeSongFromAudio", error);
-    next(error);
+    console.error("Error in recognizeSongFromAudio:", error);
+    return res.status(500).json({ message: "Lỗi server nội bộ", error: error.message });
   }
 };
 
