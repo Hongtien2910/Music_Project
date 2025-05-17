@@ -1,7 +1,7 @@
 import Topbar from "@/components/Topbar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEffect, useState, useRef } from "react";
-import { FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
+import { FaMicrophone, FaMicrophoneSlash, FaUpload } from "react-icons/fa";
 import { useMusicStore } from "@/stores/useMusicStore";
 import SectionGridSong from "./components/SectionGridSong";
 import SectionGridAlbum from "./components/SectionGridAlbum";
@@ -14,6 +14,7 @@ const SearchPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [hasSearchedByAudio, setHasSearchedByAudio] = useState(false);
+  const [isAudioLoading, setIsAudioLoading] = useState(false); // loading riêng cho audio
 
   const fetchSongs = useMusicStore(state => state.fetchSongs);
   const fetchAlbums = useMusicStore(state => state.fetchAlbums);
@@ -102,31 +103,58 @@ const SearchPage = () => {
       recorder.current.start();
       setIsRecording(true);
 
-      // Ghi trong 10 giây rồi dừng
+      // Sau khi ghi 10s, dừng và gửi lên
       timeoutId.current = window.setTimeout(async () => {
-        if (!recorder.current) return;
-        const { blob } = await recorder.current.stop();
-        setIsRecording(false);
+        try {
+          if (!recorder.current) return;
+          setIsAudioLoading(true);
 
-        // Tạo file WAV
-        const wavFile = new File([blob], "recording.wav", { type: "audio/wav" });
+          const { blob } = await recorder.current.stop();
+          setIsRecording(false);
 
-        // Gọi hàm gửi file lên backend
-        await searchByAudio(wavFile);
+          // Tạo file WAV
+          const wavFile = new File([blob], "recording.wav", { type: "audio/wav" });
 
-        setHasSearchedByAudio(true);
+          // Gọi hàm gửi file lên backend
+          await searchByAudio(wavFile);
 
-        // Dừng stream
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
+          setHasSearchedByAudio(true);
+        } catch (error) {
+          console.error("Error during audio processing:", error);
+          alert("There was an error processing the audio.");
+        } finally {
+          setIsAudioLoading(false);
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+          }
         }
       }, 10000);
-
     } catch (err) {
       console.error("Error accessing microphone:", err);
       alert("Microphone cannot be accessed. Please check your access rights.");
       setIsRecording(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!["audio/wav", "audio/mp3", "audio/mpeg"].includes(file.type)) {
+      alert("Please upload an MP3 or WAV file.");
+      return;
+    }
+
+    try {
+      setIsAudioLoading(true);
+      await searchByAudio(file);
+      setHasSearchedByAudio(true);
+    } catch (error) {
+      console.error("Error uploading audio file:", error);
+      alert("There was an error processing the uploaded file.");
+    } finally {
+      setIsAudioLoading(false);
     }
   };
 
@@ -138,7 +166,7 @@ const SearchPage = () => {
       <Topbar />
       <ScrollArea className="h-[calc(100vh-180px)]">
         <div className="p-4 sm:p-6">
-          {/* Header + Search input + Mic button */}
+          {/* Header + Search input + Mic button + Upload */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
             <h1 className="text-2xl sm:text-3xl font-bold">Search</h1>
             <div className="flex gap-2 items-center">
@@ -148,24 +176,53 @@ const SearchPage = () => {
                 className="w-[300px] max-w-xl bg-zinc-800 text-white px-4 py-2 rounded-md border border-customRed focus:outline-none focus:border-customRed focus:ring-1 focus:ring-customRed"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                disabled={isRecording}
+                disabled={isRecording || isAudioLoading}
               />
+
+              {/* Mic button */}
               <button
                 className={`text-white p-2 rounded-full ${
-                  isRecording ? "bg-customRed hover:bg-red-800" : "bg-zinc-700 hover:bg-zinc-600"
+                  isRecording ? "bg-zinc-700 hover:bg-zinc-600" : "bg-customRed hover:bg-red-800"
                 } transition`}
                 onClick={handleAudioSearch}
-                title="Tìm bằng giọng nói"
-                disabled={isRecording}
+                title="Search by voice"
+                disabled={isRecording || isAudioLoading || keyword.trim() !== ""}
               >
                 {isRecording ? <FaMicrophoneSlash /> : <FaMicrophone />}
               </button>
+
+              {/* Upload button */}
+              <label
+                htmlFor="file-upload"
+                className={`cursor-pointer text-white p-2 rounded-full bg-customRed hover:bg-red-800 transition ${
+                  isRecording || isAudioLoading ? "pointer-events-none opacity-50" : ""
+                }`}
+                title="Upload audio file"
+              >
+                <FaUpload />
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept=".mp3,.wav"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={isRecording || isAudioLoading || keyword.trim() !== ""}
+                />
+              </label>
             </div>
           </div>
 
+          {/* Indicator khi đang ghi âm */}
           {isRecording && <MicrophoneIndicator />}
 
-          {/* Kết quả tìm kiếm */}
+          {/* Loading spinner riêng cho audio */}
+          {isAudioLoading && (
+            <div className="flex justify-center mt-6">
+              <div className="w-8 h-8 border-4 border-white border-t-customRed rounded-full animate-spin" />
+            </div>
+          )}
+
+          {/* Search results */}
           {shouldShowResults && (
             <div className="space-y-8">
               {keyword.trim() !== "" && (
@@ -192,14 +249,13 @@ const SearchPage = () => {
 
               {hasSearchedByAudio && (
                 <>
-                  {searchedSongs.length > 0 && (
+                  {searchedSongs.length > 0 ? (
                     <SectionGridSong
                       title="Maybe this song"
                       songs={searchedSongs}
                       isLoading={isLoading}
                     />
-                  )}
-                  {searchedSongs.length === 0 && (
+                  ) : (
                     <p className="text-white text-center">No results found matching the audio.</p>
                   )}
                 </>

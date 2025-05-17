@@ -118,8 +118,17 @@ export const recognizeSongFromAudio = async (req, res) => {
 
     const file = req.files.file;
 
+    if (!fs.existsSync(file.tempFilePath)) {
+      return res.status(400).json({ message: "Temp file not exists" });
+    }
+
+    const buffer = fs.readFileSync(file.tempFilePath);
+
     const formData = new FormData();
-    formData.append("file", fs.createReadStream(file.tempFilePath), file.name);
+    formData.append("file", buffer, {
+      filename: file.name,
+      contentType: file.mimetype,
+    });
 
     const response = await axios.post("http://127.0.0.1:5001/recognize", formData, {
       headers: formData.getHeaders(),
@@ -127,7 +136,6 @@ export const recognizeSongFromAudio = async (req, res) => {
 
     const { SONG_NAME } = response.data;
 
-    // Loại bỏ phần đuôi như ".mp3"
     const cleanTitle = SONG_NAME.replace(/\.[^/.]+$/, "");
 
     const mongoSong = await Song.findOne({ title: cleanTitle });

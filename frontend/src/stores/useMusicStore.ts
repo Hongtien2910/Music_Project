@@ -232,7 +232,7 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 
 
 	searchByAudio: async (file: File) => {
-		set({ isLoading: true, error: null, searchedSongs: [] });
+		set({ error: null, searchedSongs: [] });
 
 		try {
 			const formData = new FormData();
@@ -253,12 +253,10 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 			// Lưu kết quả tìm được vào store
 			set({
 				searchedSongs: [recognizedSong],
-				isLoading: false,
 			});
 		} catch (error: any) {
 			set({
 				error: error.response?.data?.message || error.message || 'Lỗi khi tìm kiếm theo audio',
-				isLoading: false,
 			});
 		}
 	},
