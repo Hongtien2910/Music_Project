@@ -4,6 +4,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Clock, Info, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Check } from "lucide-react";
+import { Heart } from "lucide-react";
+import { useMusicStore } from "@/stores/useMusicStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 type SectionGridProps = {
   title: string;
@@ -21,6 +24,8 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
   const { queue, addToQueueOnly } = usePlayerStore(); 
   const navigate = useNavigate();
   const { currentSong, isPlaying, playAlbum } = usePlayerStore();
+  const { likeOrUnlikeSong, isSongLiked } = useMusicStore();
+	const { currentUser } = useAuthStore();
 
   // chuẩn hóa data đầu vào thành dạng Song
   const mappedSongs: Song[] = songs.map((song) => ({
@@ -53,9 +58,10 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
 
       <div className="bg-black/20 backdrop-blur-sm rounded-md">
         {/* Table header */}
-        <div className="grid grid-cols-[16px_4fr_2fr_1fr] gap-4 px-6 py-2 text-sm text-zinc-400 border-b border-white/5">
+        <div className="grid grid-cols-[24px_3fr_1fr_2fr_1fr] gap-4 px-6 py-2 text-sm text-zinc-400 border-b border-white/5">
           <div>#</div>
           <div>Title</div>
+          <div></div>
           <div>Released Date</div>
           <div>
             <Clock className="h-4 w-4" />
@@ -71,7 +77,7 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
                   <div
                     key={song._id}
                     onClick={() => handlePlaySong(index)}
-                    className={`grid grid-cols-[16px_4fr_2fr_1fr] gap-4 px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 rounded-md group cursor-pointer ${
+                    className={`grid grid-cols-[24px_3fr_1fr_2fr_1fr] gap-4 px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 rounded-md group cursor-pointer ${
                       isCurrentSong ? "text-white" : ""
                     }`}
                   >
@@ -105,6 +111,21 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
                         <div className="truncate">{song.artist}</div>
                       </div>
                     </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        likeOrUnlikeSong(song._id, currentUser?._id ?? "");
+                      }}
+                    >
+                      <Heart
+                        className={`w-4 h-4 ${
+                          isSongLiked(song._id)
+                            ? "text-red-500 fill-red-500"
+                            : "text-zinc-400 hover:text-white"
+                        }`}
+                      />
+                    </button>
 
                     <div className="flex items-center">{song.createdAt.split("T")[0]}</div>
 

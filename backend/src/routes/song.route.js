@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllSongs, getFeaturedSongs, getMadeForYouSongs, getRecommendedSongs, getSongById, getTrendingSongs, incrementPlays, recognizeSongFromAudio } from "../controllers/song.controller.js";
+import { getAllSongs, getFeaturedSongs, getMadeForYouSongs, getRecommendedSongs, getSongById, getTrendingSongs, incrementPlays, likeSong, recognizeSongFromAudio, unlikeSong } from "../controllers/song.controller.js";
 import { protectRoute, requireAdmin } from "../middleware/auth.middleware.js";
 import { get } from "mongoose";
 
@@ -13,6 +13,8 @@ router.get("/trending", getTrendingSongs);
 router.get("/:songId", getSongById);
 router.post("/recommend", getRecommendedSongs);
 router.post("/recognize", recognizeSongFromAudio);
-router.patch('/:songId/increment-plays', incrementPlays);
+router.patch('/:songId/incrementplays', incrementPlays);
+router.post('/:songId/like', likeSong);
+router.post('/:songId/unlike', unlikeSong);
 
 export default router;

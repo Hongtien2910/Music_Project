@@ -24,7 +24,7 @@ const AudioPlayer = () => {
       ) {
         setHasCountedPlay(true);
         try {
-          await fetch(`/songs/${currentSong._id}/increment-plays`, {
+          await fetch(`/songs/${currentSong._id}/incrementplays`, {
             method: "PATCH",
           });
           console.log("Đã tăng lượt nghe");

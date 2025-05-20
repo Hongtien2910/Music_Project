@@ -37,6 +37,11 @@ interface MusicStore {
 
 	searchedSongs: Song[]; 
     searchByAudio: (file: File) => Promise<void>;
+
+	likedSongs: Song[];
+	fetchLikedSongs: (userId: string) => Promise<void>;
+	likeOrUnlikeSong: (songId: string, userId: string) => Promise<void>;
+	isSongLiked: (songId: string) => boolean;
 }
 
 export const useMusicStore = create<MusicStore>((set, get) => ({
@@ -259,6 +264,51 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 				error: error.response?.data?.message || error.message || 'Lỗi khi tìm kiếm theo audio',
 			});
 		}
+	},
+
+	likedSongs: [],
+
+	fetchLikedSongs: async (userId: string) => {
+		set({ error: null });
+		try {
+			const res = await axiosInstance.get(`/users/${userId}/likedSongs`);
+			set({ likedSongs: res.data });
+		} catch (error: any) {
+			toast.error("Cannot get favorite songs");
+			set({ error: error.response?.data?.message || "Lỗi khi tải liked songs" });
+		} finally {
+			set({ isLoading: false });
+		}
+	},
+
+	likeOrUnlikeSong: async (songId: string, userId: string) => {
+		const { likedSongs, songs } = get();
+		const isLiked = likedSongs.some((s) => s._id === songId);
+		set({ error: null });
+		
+		try {
+			if (isLiked) {
+			// Gỡ like
+			await axiosInstance.post(`/songs/${songId}/unlike`, { userId });
+			set({ likedSongs: likedSongs.filter((s) => s._id !== songId) });
+			} else {
+			// Thêm like
+			await axiosInstance.post(`/songs/${songId}/like`, { userId });
+			const song = songs.find((s) => s._id === songId);
+			if (song) {
+				set({ likedSongs: [...likedSongs, song] });
+			}
+			}
+		} catch (error: any) {
+			toast.error("Operation failed");
+			set({ error: error.response?.data?.message || "Lỗi khi thao tác yêu thích bài hát" });
+		} finally {
+			set({ isLoading: false });
+		}
+	},
+
+	isSongLiked: (songId: string) => {
+		return get().likedSongs.some((s) => s._id === songId);
 	},
 
 }));

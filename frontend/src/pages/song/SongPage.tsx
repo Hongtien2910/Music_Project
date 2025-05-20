@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import SectionGrid from "./components/SectionGrid";
 import { Plus, Check } from "lucide-react"; 
+import { useAuthStore } from "@/stores/useAuthStore";
+import { Heart } from "lucide-react";
 
 export const formatDuration = (seconds: number) => {
 	const minutes = Math.floor(seconds / 60);
@@ -33,7 +35,8 @@ const SongPage = () => {
 	const navigate = useNavigate();  
 	const { fetchSongById, currentSongM, isLoading, recommendedSongs, fetchRecommendedSong } = useMusicStore();
 	const { currentSong, isPlaying, playAlbum, togglePlay, queue, addToQueueOnly } = usePlayerStore();
-
+	const { likeOrUnlikeSong, isSongLiked } = useMusicStore();
+	const { currentUser } = useAuthStore();
 
 	// Lưu trữ lyrics sau khi tải từ URL
 	const [lyrics, setLyrics] = useState<any[]>([]);
@@ -148,6 +151,22 @@ const SongPage = () => {
 											<Play className="h-7 w-7 text-white fill-white" />
 										)}
 									</Button>
+
+									<button
+										onClick={(e) => {
+											e.preventDefault();
+											e.stopPropagation();
+											likeOrUnlikeSong(currentSongM._id, currentUser?._id ?? "");
+										}}
+										>
+										<Heart
+											className={`w-10 h-10 ${
+											isSongLiked(currentSongM._id)
+												? "text-red-500 fill-red-500"
+												: "text-zinc-400 hover:text-white"
+											}`}
+										/>
+									</button>
 
 									{/* Nút thêm vào queue */}
 									<button

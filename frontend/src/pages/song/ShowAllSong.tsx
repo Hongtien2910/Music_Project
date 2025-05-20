@@ -1,11 +1,12 @@
-import { Button } from "@/components/ui/button";
 import { useMusicStore } from "@/stores/useMusicStore";
 import { usePlayerStore } from "@/stores/usePlayerStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Pause, Play, Info } from "lucide-react";
+import { Clock, Play, Info } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Check } from "lucide-react";
+import { Heart } from "lucide-react";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export const formatDuration = (seconds: number) => {
 	const minutes = Math.floor(seconds / 60);
@@ -14,25 +15,32 @@ export const formatDuration = (seconds: number) => {
 };
 
 const ShowAllSong = () => {
-	const { fetchSongs, songs, isLoading } = useMusicStore();
-	const { currentSong, isPlaying, playAlbum, togglePlay } = usePlayerStore();
+	const { fetchSongs, songs, isLoading, likeOrUnlikeSong, isSongLiked } = useMusicStore();
+	const { currentSong, isPlaying, playSong } = usePlayerStore();
 	const navigate = useNavigate();
 	const { queue, addToQueueOnly } = usePlayerStore(); 
+	const { currentUser } = useAuthStore();
 
 	useEffect(() => {
 		fetchSongs();
 	}, [fetchSongs]);
 
-	const handlePlayAll = () => {
-		if (!songs.length) return;
-
-		const isCurrentListPlaying = songs.some((song) => song._id === currentSong?._id);
-		if (isCurrentListPlaying) togglePlay();
-		else playAlbum(songs, 0);
-	};
-
 	const handlePlaySong = (index: number) => {
-		playAlbum(songs, index);
+		const selectedSong = songs[index];
+		if (!selectedSong) return;
+
+		// Nếu đang phát đúng bài đó thì toggle play/pause nếu muốn
+		if (currentSong?._id === selectedSong._id) {
+			// togglePlay(); // nếu muốn bật/tắt nhạc khi click lại cùng bài
+			return;
+		}
+
+		// Nếu chưa có trong queue thì thêm vào
+		if (!queue.some((s) => s._id === selectedSong._id)) {
+			addToQueueOnly(selectedSong);
+		}
+
+		playSong(selectedSong, queue.length); // dùng queue.length để phát bài vừa thêm cuối hàng
 	};
 
 	const handleNavigateToSongPage = (songId: string) => {
@@ -64,26 +72,14 @@ const ShowAllSong = () => {
 									<span className='font-medium text-white'>{songs.length} songs</span>
 								</div>
 							</div>
-
-							<div className='px-6 pb-4 flex items-center gap-6'>
-								<Button
-									onClick={handlePlayAll}
-									size='icon'
-									className='w-14 h-14 rounded-full border border-white bg-customRed hover:bg-red-800 hover:scale-105 transition-all'>
-									{isPlaying && songs.some((song) => song._id === currentSong?._id) ? (
-										<Pause className='h-7 w-7 text-white fill-white' />
-									) : (
-										<Play className='h-7 w-7 text-white fill-white' />
-									)}
-								</Button>
-							</div>
 						</div>
 
 						{/* Song list */}
 						<div className='bg-black/20 backdrop-blur-sm'>
-							<div className='grid grid-cols-[16px_4fr_2fr_1fr] gap-4 px-10 py-2 text-sm text-zinc-400 border-b border-white/5'>
+							<div className='grid grid-cols-[24px_3fr_1fr_2fr_1fr] gap-4 px-10 py-2 text-sm text-zinc-400 border-b border-white/5'>
 								<div>#</div>
 								<div>Title</div>
+								<div></div>
 								<div>Released Date</div>
 								<div>
 									<Clock className='h-4 w-4' />
@@ -98,7 +94,7 @@ const ShowAllSong = () => {
 											<div
 												key={song._id}
 												onClick={() => handlePlaySong(index)}
-												className='grid grid-cols-[16px_4fr_2fr_1fr] gap-4 px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 rounded-md group cursor-pointer'>
+												className='grid grid-cols-[24px_3fr_1fr_2fr_1fr] gap-4 px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 rounded-md group cursor-pointer'>
 												<div className='flex items-center justify-center'>
 													{isCurrentSong ? (
 														isPlaying ? (
@@ -125,6 +121,23 @@ const ShowAllSong = () => {
 														<div>{song.artist}</div>
 													</div>
 												</div>
+
+												<button
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+														likeOrUnlikeSong(song._id, currentUser?._id ?? "");
+													}}
+													>
+													<Heart
+														className={`w-4 h-4 ${
+														isSongLiked(song._id)
+															? "text-red-500 fill-red-500"
+															: "text-zinc-400 hover:text-white"
+														}`}
+													/>
+												</button>
+
 												<div className='flex items-center'>{song.createdAt.split("T")[0]}</div>
 												<div className='flex items-center gap-2'>
 													<span>{formatDuration(song.duration)}</span>

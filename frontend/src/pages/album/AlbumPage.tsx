@@ -8,6 +8,8 @@ import { useParams } from "react-router-dom";
 import { Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Check } from "lucide-react";
+import { Heart } from "lucide-react";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export const formatDuration = (seconds: number) => {
 	const minutes = Math.floor(seconds / 60);
@@ -18,8 +20,10 @@ export const formatDuration = (seconds: number) => {
 const AlbumPage = () => {
     const {albumId} = useParams();
     const { fetchAlbumById, currentAlbum, isLoading } = useMusicStore();
-	const {currentSong, isPlaying, playAlbum, togglePlay} = usePlayerStore();
+	const {currentSong, isPlaying, playAlbum, playSong, togglePlay} = usePlayerStore();
 	const navigate = useNavigate();
+	const { likeOrUnlikeSong, isSongLiked } = useMusicStore();
+	const { currentUser } = useAuthStore();
 
 	const handleNavigateToSongPage = (songId: string) => {
 		navigate(`/songs/${songId}`);
@@ -44,9 +48,24 @@ const AlbumPage = () => {
 	};
 
 	const handlePlaySong = (index: number) => {
-		if (!currentAlbum) return
+		if (!currentAlbum) return;
 
-		playAlbum(currentAlbum?.songs, index);
+		const selectedSong = currentAlbum.songs[index];
+		if (!selectedSong) return;
+
+		// Nếu đang phát đúng bài đó thì toggle play/pause
+		if (currentSong?._id === selectedSong._id) {
+			togglePlay();
+			return;
+		}
+
+		// Nếu bài chưa có trong queue thì thêm vào
+		if (!queue.some((s) => s._id === selectedSong._id)) {
+			addToQueueOnly(selectedSong);
+		}
+
+		// Phát bài đó
+		playSong(selectedSong, queue.length); // dùng queue.length nếu vừa mới add
 	};
 
 
@@ -103,9 +122,10 @@ const AlbumPage = () => {
 						<div className='bg-black/20 backdrop-blur-sm'>
 							{/* table header */}
 							<div
-								className='grid grid-cols-[16px_4fr_2fr_1fr] gap-4 px-10 py-2 text-sm text-zinc-400 border-b border-white/5'>
+								className='grid grid-cols-[24px_3fr_1fr_2fr_1fr] gap-4 px-10 py-2 text-sm text-zinc-400 border-b border-white/5'>
 								<div>#</div>
 								<div>Title</div>
+								<div></div>
 								<div>Released Date</div>
 								<div>
 									<Clock className='h-4 w-4' />
@@ -115,7 +135,7 @@ const AlbumPage = () => {
 							{/* songs list */}
 
 							<div className='px-6'>
-								<ScrollArea className="h-[400px] rounded-md">
+								<ScrollArea className="h-[310px] rounded-md">
 								<div className='space-y-2 py-4'>
 									{currentAlbum?.songs.map((song, index) => {
 										const isCurrentSong = currentSong?._id === song._id;
@@ -123,7 +143,7 @@ const AlbumPage = () => {
 											<div
 												key={song._id}
 												onClick={() => handlePlaySong(index)}
-												className={`grid grid-cols-[16px_4fr_2fr_1fr] gap-4 px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 rounded-md group cursor-pointer`}>
+												className={`grid grid-cols-[24px_3fr_1fr_2fr_1fr] gap-4 px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 rounded-md group cursor-pointer`}>
 												<div className='flex items-center justify-center'>
 													{isCurrentSong ? (
 														isPlaying ? (
@@ -156,6 +176,20 @@ const AlbumPage = () => {
 														<div>{song.artist}</div>
 													</div>
 												</div>
+												<button
+													onClick={(e) => {
+														e.stopPropagation();
+														likeOrUnlikeSong(song._id, currentUser?._id ?? "");
+													}}
+												>
+													<Heart
+														className={`w-4 h-4 ${
+															isSongLiked(song._id)
+																? "text-red-500 fill-red-500"
+																: "text-zinc-400 hover:text-white"
+														}`}
+													/>
+												</button>
 												<div className='flex items-center'>{song.createdAt.split("T")[0]}</div>
 												<div className='flex items-center gap-2'>
 													<span>{formatDuration(song.duration)}</span>

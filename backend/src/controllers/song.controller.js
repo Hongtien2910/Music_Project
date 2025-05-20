@@ -1,4 +1,5 @@
 import { Song } from "../models/song.model.js";
+import { User } from "../models/user.model.js";
 import axios from "axios";
 import fs from 'fs';
 import FormData from 'form-data';
@@ -215,6 +216,44 @@ export const incrementPlays = async (req, res, next) => {
     res.status(200).json({ plays: song.plays });
   } catch (error) {
     console.error('Lỗi khi tăng lượt nghe:', error);
+    next(error);
+  }
+};
+
+export const likeSong = async (req, res, next) => {
+  const { userId } = req.body;
+  const { songId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.likedSongs.includes(songId)) {
+      user.likedSongs.push(songId);
+      await user.save();
+    }
+
+    res.status(200).json({ message: "Song liked" });
+  } catch (error) {
+    console.error("Error in likeSong:", error);
+    next(error);
+  }
+};
+
+export const unlikeSong = async (req, res, next) => {
+  const { userId } = req.body;
+  const { songId } = req.params;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.likedSongs = user.likedSongs.filter(id => id.toString() !== songId);
+    await user.save();
+
+    res.status(200).json({ message: "Song unliked" });
+  } catch (error) {
+    console.error("Error in unlikeSong:", error);
     next(error);
   }
 };

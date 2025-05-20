@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
+    likedSongs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Song",
+    }],
 }, {
     timestamps: true,
 });

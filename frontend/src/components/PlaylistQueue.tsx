@@ -2,6 +2,8 @@ import { usePlayerStore } from "@/stores/usePlayerStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Play, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Heart } from "lucide-react";
+
 import {
   DndContext,
   closestCenter,
@@ -18,6 +20,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Song } from "@/types";
+import { useMusicStore } from "@/stores/useMusicStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 // Định nghĩa kiểu cho props component SortableSongRow
 interface SortableSongRowProps {
@@ -52,6 +56,8 @@ const SortableSongRow = ({
     transition,
   };
 
+  const { likeOrUnlikeSong, isSongLiked } = useMusicStore();
+  const { currentUser } = useAuthStore();
   return (
     <div
       ref={setNodeRef}
@@ -59,11 +65,11 @@ const SortableSongRow = ({
       {...attributes}
       {...listeners}
       onClick={() => handlePlaySong(index)}
-      className={`grid grid-cols-[16px_4fr_1fr] gap-4 px-2 py-2 text-sm rounded-md group cursor-pointer transition-colors ${
+      className={`grid grid-cols-[24px_4fr_20px_72px] gap-4 px-4 py-2 text-sm rounded-md group cursor-pointer transition-colors ${
         isCurrentSong ? "bg-white/10 text-white" : "hover:bg-white/5 text-zinc-400"
       }`}
     >
-      {/* Play / Index */}
+      {/* Cột 1: Index / Play icon */}
       <div className="flex items-center justify-center">
         {isCurrentSong ? (
           isPlaying ? (
@@ -83,7 +89,7 @@ const SortableSongRow = ({
         )}
       </div>
 
-      {/* Thumbnail, title, artist */}
+      {/* Cột 2: Thumbnail, title, artist */}
       <div className="flex items-center gap-3 truncate">
         <img
           src={song.imageUrl}
@@ -92,12 +98,30 @@ const SortableSongRow = ({
         />
         <div className="truncate">
           <div className="font-medium truncate">{song.title}</div>
-          <div className="truncate text-sm">{song.artist}</div>
+          <div className="truncate text-sm text-muted-foreground">{song.artist}</div>
         </div>
       </div>
 
-      {/* Duration + Info */}
-      <div className="flex items-center justify-between gap-2 pr-2">
+      {/* Cột 3: Yêu thích */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // Ngăn lan truyền sự kiện
+          likeOrUnlikeSong(song._id, currentUser?._id ?? "");
+        }}
+        className="dnd-cancel"
+      >
+        <Heart
+          className={`w-4 h-4 ${
+            isSongLiked(song._id)
+              ? "text-red-500 fill-red-500"
+              : "text-zinc-400 hover:text-white"
+          }`}
+        />
+      </button>
+
+
+      {/* Cột 4: Duration + Info */}
+      <div className="flex items-center justify-end gap-2 ">
         <span>{formatDuration(song.duration)}</span>
         <Info
           className="w-4 h-4 cursor-pointer hover:text-white transition"
@@ -112,11 +136,19 @@ const SortableSongRow = ({
 };
 
 const PlaylistQueue = () => {
-  const { queue, currentSong, isPlaying, playSong, setQueue, togglePlay  } = usePlayerStore();
+  const { queue, currentSong, isPlaying, playSong, setQueue, togglePlay } = usePlayerStore();
   const navigate = useNavigate();
 
   // Sử dụng dnd-kit sensors
-  const sensors = useSensors(useSensor(PointerSensor));
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
+      },
+    })
+  );
+
 
   const handlePlaySong = (index: number) => {
     const selectedSong = queue[index];
@@ -127,17 +159,12 @@ const PlaylistQueue = () => {
     }
 
     if (currentSong?._id === selectedSong._id) {
-      if (isPlaying) {
-        togglePlay();
-      } else {
-        togglePlay();
-      }
+      togglePlay();
       return;
     }
 
     playSong(selectedSong, index);
   };
-
 
   const handleNavigateToSongPage = (songId: string) => {
     navigate(`/songs/${songId}`);
@@ -157,12 +184,6 @@ const PlaylistQueue = () => {
 
   return (
     <div className="bg-zinc-900 backdrop-blur-sm rounded-md">
-      <div className="grid grid-cols-[16px_4fr_1fr] gap-4 px-4 py-2 text-sm text-zinc-400 border-b border-white/5">
-        <div>#</div>
-        <div>Title</div>
-        <div>Duration</div>
-      </div>
-
       <ScrollArea className="h-[500px] px-4 py-2">
         <DndContext
           sensors={sensors}

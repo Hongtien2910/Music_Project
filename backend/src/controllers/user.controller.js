@@ -28,3 +28,17 @@ export const getMessages = async (req, res, next) => {
 		next(error);
 	}
 };
+
+export const getLikedSongs = async (req, res, next) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findById(userId).populate("likedSongs");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json(user.likedSongs);
+  } catch (error) {
+    console.error("Error in getLikedSongs:", error);
+    next(error);
+  }
+};
