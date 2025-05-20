@@ -14,6 +14,7 @@ import NotFoundPage from "./pages/NotFound/NotFoundPage";
 import LyricPage from "./pages/lyric/LyricPage";
 import SongPage from "./pages/song/SongPage";
 import ShowAllSong from "./pages/song/ShowAllSong";
+import PlaylistQueue from "./pages/playlist/PlaylistQueue";
 
 function App() {
 
@@ -32,6 +33,7 @@ function App() {
           <Route path ="albums/:albumId" element={<AlbumPage />} />
           <Route path ="/*" element={<NotFoundPage />} />
           <Route path ="/lyric" element={<LyricPage/>} />
+          <Route path ="/queue" element={<PlaylistQueue/>} />
           <Route path ="songs/:songId" element={<SongPage />} />
           <Route path ="/songs" element={<ShowAllSong />} />
         </Route>

@@ -4,15 +4,18 @@ import { Song } from "@/types";
 import { Pause, Play } from "lucide-react";
 
 const PlayButton = ({ song }: { song: Song }) => {
-	const { currentSong, isPlaying, setCurrentSong, togglePlay } = usePlayerStore();
+	const { currentSong, isPlaying, togglePlay, addToQueueAndPlay } = usePlayerStore();
 	const isCurrentSong = currentSong?._id === song._id;
 
 	const handlePlay = (e: React.MouseEvent) => {
-		e.stopPropagation(); 
-		e.preventDefault(); 
+		e.stopPropagation();
+		e.preventDefault();
 
-		if (isCurrentSong) togglePlay();
-		else setCurrentSong(song);
+		if (isCurrentSong) {
+			togglePlay();
+		} else {
+			addToQueueAndPlay(song);
+		}
 	};
 
 	return (
@@ -37,8 +40,6 @@ const PlayButton = ({ song }: { song: Song }) => {
 				<Play className="size-5 text-white fill-white" />
 			)}
 		</Button>
-
-
 	);
 };
 export default PlayButton;

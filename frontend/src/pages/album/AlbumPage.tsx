@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Plus, Check } from "lucide-react";
 
 export const formatDuration = (seconds: number) => {
 	const minutes = Math.floor(seconds / 60);
@@ -23,6 +24,7 @@ const AlbumPage = () => {
 	const handleNavigateToSongPage = (songId: string) => {
 		navigate(`/songs/${songId}`);
 	};
+	const { queue, addToQueueOnly } = usePlayerStore();
 
     useEffect(() => {
         if (albumId) fetchAlbumById(albumId!);
@@ -164,6 +166,30 @@ const AlbumPage = () => {
 															handleNavigateToSongPage(song._id);
 														}}
 													/>
+													<button
+														onClick={(e) => {
+															e.stopPropagation();
+															if (!queue.some((s) => s._id === song._id)) {
+																addToQueueOnly(song);
+															}
+														}}
+														title={
+															queue.some((s) => s._id === song._id)
+																? "Already in playlist"
+																: "Add to playlist"
+														}
+														className={`ml-2 p-1 rounded-full transition ${
+															queue.some((s) => s._id === song._id)
+																? "text-customRed"
+																: "text-zinc-400 hover:text-white"
+														}`}
+													>
+														{queue.some((s) => s._id === song._id) ? (
+															<Check className="w-4 h-4" />
+														) : (
+															<Plus className="w-4 h-4" />
+														)}
+													</button>
 												</div>
 											</div>
 										);

@@ -143,9 +143,12 @@ export const PlaybackControls = () => {
 							<Mic2 className="h-4 w-4 text-white" />
 						</Link>
 					</Button>
-					<Button size='icon' variant='ghost' className='hover:text-white text-zinc-400'>
-						<ListMusic className='h-4 w-4 text-white' />
+					<Button asChild size='icon' variant='ghost' className='hover:text-white text-zinc-400'>
+						<Link to="/queue">
+							<ListMusic className='h-4 w-4 text-white' />
+						</Link>
 					</Button>
+
 
 					<div className='flex items-center gap-2'>
 					<Button

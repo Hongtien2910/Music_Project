@@ -3,6 +3,7 @@ import { usePlayerStore } from "@/stores/usePlayerStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Clock, Info, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Plus, Check } from "lucide-react";
 
 type SectionGridProps = {
   title: string;
@@ -17,6 +18,7 @@ export const formatDuration = (seconds: number) => {
 };
 
 const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
+  const { queue, addToQueueOnly } = usePlayerStore(); 
   const navigate = useNavigate();
   const { currentSong, isPlaying, playAlbum } = usePlayerStore();
 
@@ -106,15 +108,39 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
 
                     <div className="flex items-center">{song.createdAt.split("T")[0]}</div>
 
-                    <div className="flex items-center gap-2">
+                    <div className='flex items-center gap-2'>
                       <span>{formatDuration(song.duration)}</span>
                       <Info
-                        className="ml-4 w-4 h-4 cursor-pointer text-zinc-400 hover:text-white transition"
+                        className='ml-4 w-4 h-4 cursor-pointer text-zinc-400 hover:text-white transition'
                         onClick={(e) => {
                           e.stopPropagation();
                           handleNavigateToSongPage(song._id);
                         }}
                       />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!queue.some((s) => s._id === song._id)) {
+                            addToQueueOnly(song);
+                          }
+                        }}
+                        title={
+                          queue.some((s) => s._id === song._id)
+                            ? "Already in playlist"
+                            : "Add to playlist"
+                        }
+                        className={`ml-2 p-1 rounded-full transition ${
+                          queue.some((s) => s._id === song._id)
+                            ? "text-customRed"
+                            : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {queue.some((s) => s._id === song._id) ? (
+                          <Check className="w-4 h-4" />
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 );

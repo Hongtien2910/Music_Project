@@ -10,6 +10,7 @@ interface PlayerStore {
 	currentIndex: number;
 
 	initializeQueue: (songs: Song[]) => void;
+	playSong: (song: Song, index?: number) => void;
 	playAlbum: (songs: Song[], startIndex?: number) => void;
 	setCurrentSong: (song: Song | null) => void;
 	togglePlay: () => void;
@@ -18,6 +19,10 @@ interface PlayerStore {
 
 	currentTime: number;
   	setCurrentTime: (time: number) => void;
+
+	setQueue: (songs: Song[]) => void;
+	addToQueueAndPlay: (song: Song) => void;
+	addToQueueOnly: (song: Song) => void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -28,11 +33,49 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 	currentTime: 0,
   	setCurrentTime: (time: number) => set({ currentTime: time }),
 
+	setQueue: (songs) => set({ queue: songs }),
 	initializeQueue: (songs: Song[]) => {
 		set({
 			queue: songs,
 			currentSong: get().currentSong || songs[0],
 			currentIndex: get().currentIndex === -1 ? 0 : get().currentIndex,
+		});
+	},
+
+	addToQueueOnly: (song: Song) => {
+		set((state) => {
+			const exists = state.queue.some((s) => s._id === song._id);
+			return {
+			queue: exists ? state.queue : [...state.queue, song],
+			};
+		});
+	},
+
+	addToQueueAndPlay: (song: Song) => {
+		set((state) => {
+			const exists = state.queue.some((s) => s._id === song._id);
+			const updatedQueue = exists ? state.queue : [...state.queue, song];
+			return {
+			queue: updatedQueue,
+			currentSong: song,
+			isPlaying: true,
+			};
+		});
+	},
+
+	playSong: (song: Song, index?: number) => {
+		const socket = useChatStore.getState().socket;
+		if (socket.auth) {
+			socket.emit("update_activity", {
+			userId: socket.auth.userId,
+			activity: `Playing ${song.title} by ${song.artist}`,
+			});
+		}
+
+		set({
+			currentSong: song,
+			currentIndex: index ?? -1,
+			isPlaying: true,
 		});
 	},
 

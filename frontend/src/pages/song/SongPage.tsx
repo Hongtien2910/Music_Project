@@ -6,6 +6,7 @@ import { Clock, Pause, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import SectionGrid from "./components/SectionGrid";
+import { Plus, Check } from "lucide-react"; 
 
 export const formatDuration = (seconds: number) => {
 	const minutes = Math.floor(seconds / 60);
@@ -31,7 +32,8 @@ const SongPage = () => {
 	const { songId } = useParams();
 	const navigate = useNavigate();  
 	const { fetchSongById, currentSongM, isLoading, recommendedSongs, fetchRecommendedSong } = useMusicStore();
-	const { currentSong, isPlaying, playAlbum, togglePlay } = usePlayerStore();
+	const { currentSong, isPlaying, playAlbum, togglePlay, queue, addToQueueOnly } = usePlayerStore();
+
 
 	// Lưu trữ lyrics sau khi tải từ URL
 	const [lyrics, setLyrics] = useState<any[]>([]);
@@ -134,18 +136,46 @@ const SongPage = () => {
 									{currentSongM.albumTitle && <span>• {currentSongM.albumTitle}</span>}
 									{currentSongM.createdAt && <span>• {currentSongM.createdAt.split("T")[0]}</span>}
 								</div>
-								<div className="mt-4">
+								<div className="flex items-center gap-4 mt-4">
 									<Button
 										onClick={handlePlaySong}
 										size="icon"
-										className="w-14 h-14 rounded-full border border-white bg-customRed hover:bg-red-800 hover:scale-105 transition-all">
+										className="w-14 h-14 rounded-full border border-white bg-customRed hover:bg-red-800 hover:scale-105 transition-all"
+									>
 										{isCurrentSongPlaying ? (
 											<Pause className="h-7 w-7 text-white fill-white" />
 										) : (
 											<Play className="h-7 w-7 text-white fill-white" />
 										)}
 									</Button>
+
+									{/* Nút thêm vào queue */}
+									<button
+										onClick={(e) => {
+											e.stopPropagation();
+											if (currentSongM && !queue.some((s) => s._id === currentSongM._id)) {
+												addToQueueOnly(currentSongM);
+											}
+										}}
+										title={
+											currentSongM && queue.some((s) => s._id === currentSongM._id)
+												? "Already in playlist"
+												: "Add to playlist"
+										}
+										className={`p-2 rounded-full  transition ${
+											currentSongM && queue.some((s) => s._id === currentSongM._id)
+												? "text-customRed border border-customRed"
+												: "text-zinc-300 border border-white hover:text-red-500 hover:border-red-500"
+										}`}
+									>
+										{currentSongM && queue.some((s) => s._id === currentSongM._id) ? (
+											<Check className="w-5 h-5" />
+										) : (
+											<Plus className="w-5 h-5" />
+										)}
+									</button>
 								</div>
+
 							</div>
 						</div>
 
