@@ -93,6 +93,12 @@ const SongPage = () => {
 		}
 	}, [currentUser]);
 
+	useEffect(() => {
+		if (users.length === 0) {
+			fetchUsers();
+		}
+	}, [fetchUsers, users.length]);
+
 	const handlePlaySong = () => {
 		if (!currentSongM) return;
 		if (isPlaying && currentSong?._id === currentSongM._id) {

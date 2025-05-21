@@ -23,6 +23,12 @@ interface PlayerStore {
 	setQueue: (songs: Song[]) => void;
 	addToQueueAndPlay: (song: Song) => void;
 	addToQueueOnly: (song: Song) => void;
+
+	repeatMode: "off" | "all" | "one";
+	shuffle: boolean;
+
+	setRepeatMode: (mode: "off" | "all" | "one") => void;
+	toggleShuffle: () => void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -32,6 +38,12 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 	currentIndex: -1,
 	currentTime: 0,
   	setCurrentTime: (time: number) => set({ currentTime: time }),
+
+	repeatMode: "off",
+	shuffle: false,
+
+	setRepeatMode: (mode) => set({ repeatMode: mode }),
+	toggleShuffle: () => set((state) => ({ shuffle: !state.shuffle })),
 
 	setQueue: (songs) => set({ queue: songs }),
 	initializeQueue: (songs: Song[]) => {
@@ -137,38 +149,39 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 	},
 
 	playNext: () => {
-		const { currentIndex, queue } = get();
-		const nextIndex = currentIndex + 1;
+		const { currentIndex, queue, repeatMode, shuffle } = get();
 
-		// if there is a next song to play, let's play it
-		if (nextIndex < queue.length) {
-			const nextSong = queue[nextIndex];
+		if (repeatMode === "one") {
+			// Lặp lại bài hiện tại
+			get().setCurrentSong(queue[currentIndex]);
+			return;
+		}
 
-			const socket = useChatStore.getState().socket;
-			if (socket.auth) {
-				socket.emit("update_activity", {
-					userId: socket.auth.userId,
-					activity: `Playing ${nextSong.title} by ${nextSong.artist}`,
-				});
-			}
+		let nextIndex = currentIndex + 1;
 
-			set({
-				currentSong: nextSong,
-				currentIndex: nextIndex,
-				isPlaying: true,
-			});
-		} else {
-			// no next song
-			set({ isPlaying: false });
+		// Shuffle logic
+		if (shuffle) {
+			const remainingIndices = queue.map((_, i) => i).filter(i => i !== currentIndex);
+			nextIndex = remainingIndices[Math.floor(Math.random() * remainingIndices.length)];
+		}
 
-			const socket = useChatStore.getState().socket;
-			if (socket.auth) {
-				socket.emit("update_activity", {
-					userId: socket.auth.userId,
-					activity: `Idle`,
-				});
+		// Lặp toàn bộ playlist nếu hết bài
+		if (nextIndex >= queue.length) {
+			if (repeatMode === "all") {
+				nextIndex = 0;
+			} else {
+				set({ isPlaying: false });
+				return;
 			}
 		}
+
+		const nextSong = queue[nextIndex];
+
+		set({
+			currentSong: nextSong,
+			currentIndex: nextIndex,
+			isPlaying: true,
+		});
 	},
 	playPrevious: () => {
 		const { currentIndex, queue } = get();

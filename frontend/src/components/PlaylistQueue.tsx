@@ -1,8 +1,7 @@
 import { usePlayerStore } from "@/stores/usePlayerStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Play, Info } from "lucide-react";
+import { Play, Info, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Heart } from "lucide-react";
 
 import {
   DndContext,
@@ -24,7 +23,6 @@ import { useMusicStore } from "@/stores/useMusicStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useEffect } from "react";
 
-// Định nghĩa kiểu cho props component SortableSongRow
 interface SortableSongRowProps {
   song: Song;
   index: number;
@@ -60,12 +58,12 @@ const SortableSongRow = ({
   const { likeOrUnlikeSong, isSongLiked, fetchLikedSongs } = useMusicStore();
   const { currentUser } = useAuthStore();
 
-	useEffect(() => {
-		if (currentUser?._id) {
-			fetchLikedSongs(currentUser._id);
-		}
-	}, [currentUser]);
-  
+  useEffect(() => {
+    if (currentUser?._id) {
+      fetchLikedSongs(currentUser._id);
+    }
+  }, [currentUser]);
+
   return (
     <div
       ref={setNodeRef}
@@ -115,7 +113,7 @@ const SortableSongRow = ({
         onClick={(e) => {
           e.stopPropagation();
           likeOrUnlikeSong(song._id, currentUser?._id ?? "").then(() => {
-          fetchLikedSongs(currentUser?._id ?? "");
+            fetchLikedSongs(currentUser?._id ?? "");
           });
         }}
         className="dnd-cancel"
@@ -128,7 +126,6 @@ const SortableSongRow = ({
           }`}
         />
       </button>
-
 
       {/* Cột 4: Duration + Info */}
       <div className="flex items-center justify-end gap-2 ">
@@ -149,7 +146,6 @@ const PlaylistQueue = () => {
   const { queue, currentSong, isPlaying, playSong, setQueue, togglePlay } = usePlayerStore();
   const navigate = useNavigate();
 
-  // Sử dụng dnd-kit sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -159,10 +155,8 @@ const PlaylistQueue = () => {
     })
   );
 
-
   const handlePlaySong = (index: number) => {
     const selectedSong = queue[index];
-
     if (!selectedSong.audioUrl) {
       console.warn("Bài hát không có audioUrl:", selectedSong);
       return;
@@ -180,7 +174,6 @@ const PlaylistQueue = () => {
     navigate(`/songs/${songId}`);
   };
 
-  // Xử lý sắp xếp lại danh sách phát khi kéo thả
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -195,34 +188,39 @@ const PlaylistQueue = () => {
   return (
     <div className="bg-zinc-900 backdrop-blur-sm rounded-md">
       <ScrollArea className="h-[500px] px-4 py-2">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={queue.map((song) => song._id)}
-            strategy={verticalListSortingStrategy}
+        {queue.length === 0 ? (
+          <div className="text-center text-zinc-500 text-sm py-8">
+            Empty playlist
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
-            <div className="space-y-2">
-              {queue.map((song, index) => {
-                const isCurrentSong = currentSong?._id === song._id;
-
-                return (
-                  <SortableSongRow
-                    key={song._id}
-                    song={song}
-                    index={index}
-                    isCurrentSong={isCurrentSong}
-                    isPlaying={isPlaying}
-                    handlePlaySong={handlePlaySong}
-                    handleNavigate={handleNavigateToSongPage}
-                  />
-                );
-              })}
-            </div>
-          </SortableContext>
-        </DndContext>
+            <SortableContext
+              items={queue.map((song) => song._id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {queue.map((song, index) => {
+                  const isCurrentSong = currentSong?._id === song._id;
+                  return (
+                    <SortableSongRow
+                      key={song._id}
+                      song={song}
+                      index={index}
+                      isCurrentSong={isCurrentSong}
+                      isPlaying={isPlaying}
+                      handlePlaySong={handlePlaySong}
+                      handleNavigate={handleNavigateToSongPage}
+                    />
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
       </ScrollArea>
     </div>
   );

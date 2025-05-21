@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Button } from "@/components/ui/button";
+import Topbar from "@/components/Topbar";
 
 export const formatDuration = (seconds: number) => {
 	const minutes = Math.floor(seconds / 60);
@@ -53,6 +54,8 @@ const LikedSongPage = () => {
 	if (isLoading) return null;
 
 	return (
+	<main className="rounded-md overflow-hidden h-full bg-gradient-to-b from-zinc-800 to-zinc-900">
+		<Topbar />
 		<div className='h-full'>
 			<ScrollArea className='h-full rounded-md'>
 				<div className='relative min-h-full'>
@@ -186,6 +189,7 @@ const LikedSongPage = () => {
 				</div>
 			</ScrollArea>
 		</div>
+	</main>
 	);
 };
 
