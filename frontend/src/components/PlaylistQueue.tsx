@@ -22,6 +22,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Song } from "@/types";
 import { useMusicStore } from "@/stores/useMusicStore";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useEffect } from "react";
 
 // Định nghĩa kiểu cho props component SortableSongRow
 interface SortableSongRowProps {
@@ -56,8 +57,14 @@ const SortableSongRow = ({
     transition,
   };
 
-  const { likeOrUnlikeSong, isSongLiked } = useMusicStore();
+  const { likeOrUnlikeSong, isSongLiked, fetchLikedSongs } = useMusicStore();
   const { currentUser } = useAuthStore();
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchLikedSongs(currentUser._id);
+    }
+  }, [currentUser]);
   return (
     <div
       ref={setNodeRef}

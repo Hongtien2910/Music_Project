@@ -1,5 +1,6 @@
 import { usePlayerStore } from "@/stores/usePlayerStore";
 import { useEffect, useRef, useState } from "react";
+import { axiosInstance } from "@/lib/axios";
 
 const AudioPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -9,27 +10,18 @@ const AudioPlayer = () => {
 
   const { currentSong, isPlaying, playNext, setCurrentTime } = usePlayerStore();
 
-  // Tăng lượt nghe khi nghe đủ 30 giây
+  // Tăng lượt nghe khi nghe đủ 60 giây
   const handleTimeUpdate = async () => {
-    if (
-      audioRef.current &&
-      currentSong
-    ) {
-      // Cập nhật thời gian hiện tại vào store
+    if (audioRef.current && currentSong) {
       setCurrentTime(audioRef.current.currentTime);
 
-      if (
-        !hasCountedPlay &&
-        audioRef.current.currentTime >= 30
-      ) {
+      if (!hasCountedPlay && audioRef.current.currentTime >= 60) {
         setHasCountedPlay(true);
         try {
-          await fetch(`/songs/${currentSong._id}/incrementplays`, {
-            method: "PATCH",
-          });
-          console.log("Đã tăng lượt nghe");
-        } catch (error) {
-          console.error("Lỗi khi tăng lượt nghe", error);
+          await axiosInstance.patch(`/songs/${currentSong._id}/incrementplays`);
+          console.log("✅ Đã tăng lượt nghe");
+        } catch (error: any) {
+          console.error("❌ Lỗi khi tăng lượt nghe:", error.response?.data?.message || error.message);
         }
       }
     }

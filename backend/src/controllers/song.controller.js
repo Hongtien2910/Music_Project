@@ -205,7 +205,7 @@ export const getSongById = async (req, res, next) => {
 
 export const incrementPlays = async (req, res, next) => {
   try {
-    const songId = req.params.id;
+    const songId = req.params.songId;
 
     const song = await Song.findById(songId);
     if (!song) return res.status(404).json({ message: 'Bài hát không tồn tại' });

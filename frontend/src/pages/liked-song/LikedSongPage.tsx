@@ -1,12 +1,11 @@
 import { useMusicStore } from "@/stores/useMusicStore";
 import { usePlayerStore } from "@/stores/usePlayerStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Play, Info } from "lucide-react";
+import { Clock, Play, Info, Pause, Plus, Check, Heart } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Check } from "lucide-react";
-import { Heart } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { Button } from "@/components/ui/button";
 
 export const formatDuration = (seconds: number) => {
 	const minutes = Math.floor(seconds / 60);
@@ -16,9 +15,8 @@ export const formatDuration = (seconds: number) => {
 
 const LikedSongPage = () => {
 	const { fetchLikedSongs, likedSongs, isLoading, likeOrUnlikeSong, isSongLiked } = useMusicStore();
-	const { currentSong, isPlaying, playSong } = usePlayerStore();
+	const { currentSong, isPlaying, playSong, togglePlay, playAlbum, queue, addToQueueOnly } = usePlayerStore();
 	const navigate = useNavigate();
-	const { queue, addToQueueOnly } = usePlayerStore();
 	const { currentUser } = useAuthStore();
 
 	useEffect(() => {
@@ -27,14 +25,19 @@ const LikedSongPage = () => {
 		}
 	}, [fetchLikedSongs, currentUser]);
 
+	const handlePlayAllLikedSongs = () => {
+		if (!likedSongs.length) return;
+
+		const isCurrentSongLiked = likedSongs.some((song) => song._id === currentSong?._id);
+		if (isCurrentSongLiked) togglePlay();
+		else playAlbum(likedSongs, 0); // Dùng playAlbum để phát danh sách
+	};
+
 	const handlePlaySong = (index: number) => {
 		const selectedSong = likedSongs[index];
 		if (!selectedSong) return;
 
-		if (currentSong?._id === selectedSong._id) {
-			// Có thể toggle play/pause nếu cần
-			return;
-		}
+		if (currentSong?._id === selectedSong._id) return;
 
 		if (!queue.some((s) => s._id === selectedSong._id)) {
 			addToQueueOnly(selectedSong);
@@ -53,23 +56,15 @@ const LikedSongPage = () => {
 		<div className='h-full'>
 			<ScrollArea className='h-full rounded-md'>
 				<div className='relative min-h-full'>
-					{/* Gradient background */}
-					<div
-						className="absolute top-0 left-0 right-0 h-[642px] bg-gradient-to-b from-customRed/80 via-zinc-900 to-zinc-900 pointer-events-none rounded-lg"
-						aria-hidden="true"
-					/>
-					<div
-						className="absolute top-[600px] left-0 right-0 bottom-0 bg-zinc-900 pointer-events-none"
-						aria-hidden="true"
-					/>
+					<div className="absolute top-0 left-0 right-0 h-[642px] bg-gradient-to-b from-customRed/80 via-zinc-900 to-zinc-900 pointer-events-none rounded-lg" />
+					<div className="absolute top-[600px] left-0 right-0 bottom-0 bg-zinc-900 pointer-events-none" />
+
 					<div className='relative z-10'>
-						{/* Header section */}
 						<div className='flex p-6 gap-6 pb-8'>
-							<img
-								src='/logo.png'
-								alt='Liked Songs'
-								className='w-[240px] h-[240px] object-contain'
-							/>
+							<div className='w-[240px] h-[240px] flex items-center justify-center bg-gradient-to-br from-red-900 via-red-500 to-red-300 rounded-md'>
+								<Heart className='w-20 h-20 text-white fill-white' />
+							</div>
+
 							<div className='flex flex-col justify-end'>
 								<p className='text-sm font-medium'>Songs</p>
 								<h1 className='text-6xl font-bold my-4'>Liked Songs</h1>
@@ -77,24 +72,39 @@ const LikedSongPage = () => {
 									<span className='font-medium text-white'>{likedSongs.length} songs</span>
 								</div>
 							</div>
+													{/* Nút play toàn bộ */}
+							<div className='px-6 pb-4 flex items-center gap-6'>
+								<Button
+									onClick={handlePlayAllLikedSongs}
+									size='icon'
+									className='w-14 h-14 rounded-full border border-white bg-customRed hover:bg-red-800 hover:scale-105 transition-all'>
+									{isPlaying && likedSongs.some((s) => s._id === currentSong?._id) ? (
+										<Pause className='h-7 w-7 text-white fill-white' />
+									) : (
+										<Play className='h-7 w-7 text-white fill-white' />
+									)}
+								</Button>
+							</div>
 						</div>
 
-						{/* Song list */}
+
+
+						{/* Table header */}
 						<div className='bg-black/20 backdrop-blur-sm'>
 							<div className='grid grid-cols-[24px_3fr_1fr_2fr_1fr] gap-4 px-10 py-2 text-sm text-zinc-400 border-b border-white/5'>
 								<div>#</div>
 								<div>Title</div>
 								<div></div>
 								<div>Released Date</div>
-								<div>
-									<Clock className='h-4 w-4' />
-								</div>
+								<div><Clock className='h-4 w-4' /></div>
 							</div>
 
 							<div className='px-6'>
 								<div className='space-y-2 py-4'>
 									{likedSongs.map((song, index) => {
 										const isCurrentSong = currentSong?._id === song._id;
+										const isInQueue = queue.some((s) => s._id === song._id);
+
 										return (
 											<div
 												key={song._id}
@@ -143,6 +153,7 @@ const LikedSongPage = () => {
 												</button>
 
 												<div className='flex items-center'>{song.createdAt.split("T")[0]}</div>
+
 												<div className='flex items-center gap-2'>
 													<span>{formatDuration(song.duration)}</span>
 													<Info
@@ -155,26 +166,14 @@ const LikedSongPage = () => {
 													<button
 														onClick={(e) => {
 															e.stopPropagation();
-															if (!queue.some((s) => s._id === song._id)) {
-																addToQueueOnly(song);
-															}
+															if (!isInQueue) addToQueueOnly(song);
 														}}
-														title={
-															queue.some((s) => s._id === song._id)
-																? "Already in playlist"
-																: "Add to playlist"
-														}
+														title={isInQueue ? "Already in playlist" : "Add to playlist"}
 														className={`ml-2 p-1 rounded-full transition ${
-															queue.some((s) => s._id === song._id)
-																? "text-customRed"
-																: "text-zinc-400 hover:text-white"
+															isInQueue ? "text-customRed" : "text-zinc-400 hover:text-white"
 														}`}
 													>
-														{queue.some((s) => s._id === song._id) ? (
-															<Check className="w-4 h-4" />
-														) : (
-															<Plus className="w-4 h-4" />
-														)}
+														{isInQueue ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
 													</button>
 												</div>
 											</div>

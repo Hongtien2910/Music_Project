@@ -7,6 +7,7 @@ import { Plus, Check } from "lucide-react";
 import { Heart } from "lucide-react";
 import { useMusicStore } from "@/stores/useMusicStore";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useEffect } from "react";
 
 type SectionGridProps = {
   title: string;
@@ -24,7 +25,7 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
   const { queue, addToQueueOnly } = usePlayerStore(); 
   const navigate = useNavigate();
   const { currentSong, isPlaying, playAlbum } = usePlayerStore();
-  const { likeOrUnlikeSong, isSongLiked } = useMusicStore();
+  const { likeOrUnlikeSong, isSongLiked, fetchLikedSongs } = useMusicStore();
 	const { currentUser } = useAuthStore();
 
   // chuẩn hóa data đầu vào thành dạng Song
@@ -49,6 +50,12 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
   const handleNavigateToSongPage = (songId: string) => {
     navigate(`/songs/${songId}`);
   };
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchLikedSongs(currentUser._id);
+    }
+  }, [currentUser]);
 
   if (isLoading) return <div>Loading...</div>; // Bạn có thể thay bằng skeleton
 

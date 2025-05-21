@@ -35,7 +35,7 @@ const SongPage = () => {
 	const navigate = useNavigate();  
 	const { fetchSongById, currentSongM, isLoading, recommendedSongs, fetchRecommendedSong } = useMusicStore();
 	const { currentSong, isPlaying, playAlbum, togglePlay, queue, addToQueueOnly } = usePlayerStore();
-	const { likeOrUnlikeSong, isSongLiked } = useMusicStore();
+	const { likeOrUnlikeSong, isSongLiked, fetchLikedSongs } = useMusicStore();
 	const { currentUser } = useAuthStore();
 
 	// Lưu trữ lyrics sau khi tải từ URL
@@ -73,6 +73,15 @@ const SongPage = () => {
 
 		loadLyrics();
 	}, [currentSongM]);
+
+	useEffect(() => {
+		if (currentUser) {
+			fetchLikedSongs(currentUser._id);
+		}
+		if (currentSongM?.title) {
+		isSongLiked(currentSongM._id);
+		}
+	}, [currentUser]);
 
 	// Hàm Play song
 	const handlePlaySong = () => {
@@ -203,10 +212,10 @@ const SongPage = () => {
 							<h2 className="text-xl font-semibold text-white mb-4">Lyrics</h2>
 							<div className="space-y-1 text-zinc-200 text-sm">
 								{parsedLyrics.length > 0 ? (
-									parsedLyrics.map((line) => (
-									<div key={line.time}>
-										{line && line.text}
-									</div>
+									parsedLyrics.map((line, index) => (
+										<div key={`${line.time}-${index}`}>
+											{line && line.text}
+										</div>
 									))
 								) : (
 									<p className="italic text-zinc-400">No lyrics.</p>

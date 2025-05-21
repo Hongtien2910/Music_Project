@@ -22,7 +22,7 @@ const AlbumPage = () => {
     const { fetchAlbumById, currentAlbum, isLoading } = useMusicStore();
 	const {currentSong, isPlaying, playAlbum, playSong, togglePlay} = usePlayerStore();
 	const navigate = useNavigate();
-	const { likeOrUnlikeSong, isSongLiked } = useMusicStore();
+	const { likeOrUnlikeSong, isSongLiked, fetchLikedSongs } = useMusicStore();
 	const { currentUser } = useAuthStore();
 
 	const handleNavigateToSongPage = (songId: string) => {
@@ -33,6 +33,12 @@ const AlbumPage = () => {
     useEffect(() => {
         if (albumId) fetchAlbumById(albumId!);
     }, [fetchAlbumById, albumId]);
+
+	useEffect(() => {
+		if (currentUser) {
+			fetchLikedSongs(currentUser._id);
+		}
+	}, [currentUser]);
 
     if (isLoading) return null;
 

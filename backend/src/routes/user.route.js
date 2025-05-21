@@ -7,6 +7,6 @@ const router = Router();
 
 router.get("/", protectRoute, getAllUsers);
 router.get("/messages/:userId", protectRoute, getMessages);
-router.get('/:userId/likedSongs', getLikedSongs);
+router.get('/:userId/likedSongs', protectRoute, getLikedSongs);
 
 export default router;
