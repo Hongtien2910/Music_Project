@@ -15,17 +15,11 @@ export const formatDuration = (seconds: number) => {
 };
 
 const ShowAllSong = () => {
-	const { fetchSongs, songs, isLoading, likeOrUnlikeSong, isSongLiked, fetchLikedSongs } = useMusicStore();
+	const { fetchSongs, songs, isLoading, likeOrUnlikeSong, isSongLiked } = useMusicStore();
 	const { currentSong, isPlaying, playSong } = usePlayerStore();
 	const navigate = useNavigate();
 	const { queue, addToQueueOnly } = usePlayerStore(); 
 	const { currentUser } = useAuthStore();
-
-	useEffect(() => {
-		if (currentUser) {
-			fetchLikedSongs(currentUser._id);
-		}
-	}, [currentUser]);
 
 	useEffect(() => {
 		fetchSongs();

@@ -1,5 +1,5 @@
 import { axiosInstance } from "@/lib/axios";
-import { Message, User } from "@/types";
+import { Message, User, Song } from "@/types";
 import { create } from "zustand";
 import { io } from "socket.io-client";
 
@@ -17,15 +17,35 @@ interface ChatStore {
 	fetchUsers: () => Promise<void>;
 	initSocket: (userId: string) => void;
 	disconnectSocket: () => void;
-	sendMessage: (receiverId: string, senderId: string, content: string) => void;
+	sendMessage: (
+		receiverId: string,
+		senderId: string,
+		content: string,
+		type?: "text" | "song",
+		song?: {
+			songId: string;
+			title: string;
+			artist: string;
+			thumbnailUrl: string;
+			audioUrl: string;
+		}
+	) => void;
 	fetchMessages: (userId: string) => Promise<void>;
 	setSelectedUser: (user: User | null) => void;
+
+	isSharing: boolean;
+	shareError: string | null;
+	shareSuccess: string | null;
+
+  	songs: Song[];
+  	fetchSongs: () => Promise<void>;
+  	shareSong: (receiverId: string, senderId: string, song: Song) => Promise<void>;
 }
 
 const baseURL = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
 
 const socket = io(baseURL, {
-	autoConnect: false, // only connect if user is authenticated
+	autoConnect: false,
 	withCredentials: true,
 });
 
@@ -48,7 +68,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			const response = await axiosInstance.get("/users");
 			set({ users: response.data });
 		} catch (error: any) {
-			set({ error: error.response.data.message });
+			set({ error: error.response?.data?.message || "Failed to fetch users." });
 		} finally {
 			set({ isLoading: false });
 		}
@@ -114,11 +134,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 	},
 
-	sendMessage: async (receiverId, senderId, content) => {
+	sendMessage: (receiverId, senderId, content, type = "text", song) => {
 		const socket = get().socket;
 		if (!socket) return;
 
-		socket.emit("send_message", { receiverId, senderId, content });
+		const message: any = { receiverId, senderId, type };
+
+		if (type === "text") {
+			message.content = content;
+		} else if (type === "song" && song !== undefined) {
+			message.song = song;
+		}
+
+		socket.emit("send_message", message);
 	},
 
 	fetchMessages: async (userId: string) => {
@@ -127,9 +155,55 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			const response = await axiosInstance.get(`/users/messages/${userId}`);
 			set({ messages: response.data });
 		} catch (error: any) {
-			set({ error: error.response.data.message });
+			set({ error: error.response?.data?.message || "Failed to fetch messages." });
 		} finally {
 			set({ isLoading: false });
 		}
 	},
+
+	isSharing: false,
+	shareError: null,
+	shareSuccess: null,
+
+	songs: [],
+
+	fetchSongs: async () => {
+		set({ isLoading: true, error: null });
+		try {
+		const response = await axiosInstance.get("/songs"); // endpoint API lấy danh sách bài hát
+		set({ songs: response.data });
+		} catch (error: any) {
+		set({ error: error.response?.data?.message || "Failed to fetch songs." });
+		} finally {
+		set({ isLoading: false });
+		}
+	},
+
+	shareSong: async (receiverClerkId: string, senderId: string, song: Song) => {
+		set({ isSharing: true, shareError: null, shareSuccess: null });
+		try {
+			const songToSend = {
+			songId: song._id,
+			title: song.title,
+			artist: song.artist,
+			thumbnailUrl: song.imageUrl || "",
+			audioUrl: song.audioUrl,
+			};
+
+			// Gửi message với receiverId chính là ClerkId của người nhận (như MessageInput),
+			// senderId có thể là user.id (thường là string id của Clerk)
+			get().sendMessage(receiverClerkId, senderId, "", "song", songToSend);
+
+			set({ shareSuccess: "Song shared successfully!" });
+		} catch (error: any) {
+			const message =
+			error?.response?.data?.message ||
+			(error instanceof Error ? error.message : "Failed to share song.");
+			set({ shareError: message });
+		} finally {
+			set({ isSharing: false });
+		}
+	},
+
+
 }));

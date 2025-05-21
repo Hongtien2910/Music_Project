@@ -35,10 +35,10 @@ const AlbumPage = () => {
     }, [fetchAlbumById, albumId]);
 
 	useEffect(() => {
-		if (currentUser) {
+		if (currentUser?._id) {
 			fetchLikedSongs(currentUser._id);
 		}
-	}, [currentUser]);
+	}, [ currentUser]);
 
     if (isLoading) return null;
 
@@ -185,7 +185,9 @@ const AlbumPage = () => {
 												<button
 													onClick={(e) => {
 														e.stopPropagation();
-														likeOrUnlikeSong(song._id, currentUser?._id ?? "");
+														likeOrUnlikeSong(song._id, currentUser?._id ?? "").then(() => {
+														fetchLikedSongs(currentUser?._id ?? "");
+														});
 													}}
 												>
 													<Heart

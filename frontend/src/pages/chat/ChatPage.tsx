@@ -7,7 +7,8 @@ import ChatHeader from "./components/ChatHeader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import MessageInput from "./components/MessageInput";
-
+import { Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const formatTime = (date: string) => {
 	return new Date(date).toLocaleTimeString("en-US", {
@@ -21,6 +22,7 @@ const ChatPage = () => {
 	const { user } = useUser();
 	const { messages, selectedUser, fetchUsers, fetchMessages } = useChatStore();
 	const bottomRef = useRef<HTMLDivElement>(null);
+ 	const navigate = useNavigate(); 
 
 	useEffect(() => {
 		if (user) fetchUsers();
@@ -48,37 +50,55 @@ const ChatPage = () => {
 
 							<ScrollArea className='h-[calc(100vh-340px)]'>
 								<div className='p-4 space-y-4'>
-									{messages.map((message) => (
-										<div
-											key={message._id}
-											className={`flex items-start gap-3 ${
-												message.senderId === user?.id ? "flex-row-reverse" : ""
-											}`}
-										>
-											<Avatar className='size-8'>
-												<AvatarImage
-													src={
-														message.senderId === user?.id
-															? user.imageUrl
-															: selectedUser.imageUrl
-													}
-												/>
-											</Avatar>
+									{messages.map((message) => {
+										const isMe = message.senderId === user?.id;
+										const bubbleClass = isMe
+											? "bg-customRed rounded-lg rounded-br-none"
+											: "bg-zinc-800 rounded-lg rounded-bl-none";
 
+										return (
 											<div
-												className={`p-3 max-w-[70%]
-													${message.senderId === user?.id
-													  ? "bg-customRed rounded-lg rounded-br-none"
-													  : "bg-zinc-800 rounded-lg rounded-bl-none"}
-												  `}>
-												<p className='text-sm'>{message.content}</p>
-												<span className='text-xs text-zinc-300 mt-1 block'>
-													{formatTime(message.createdAt)}
-												</span>
-											</div>
-										</div>
-									))}
+												key={message._id}
+												className={`flex items-start gap-3 ${isMe ? "flex-row-reverse" : ""}`}
+											>
+												<Avatar className='size-8'>
+													<AvatarImage
+														src={isMe ? user.imageUrl : selectedUser.imageUrl}
+													/>
+												</Avatar>
 
+												<div className={`p-3 max-w-[70%] ${bubbleClass}`}>
+													{/* Text message */}
+													{message.type === "text" && (
+														<p className='text-sm'>{message.content}</p>
+													)}
+
+													{/* Song message */}
+													{message.type === "song" && message.song && (
+														<div
+															onClick={() => navigate(`/songs/${message.song!.songId}`)}
+															className='flex items-center gap-3 cursor-pointer hover:bg-red-900 rounded-md p-2 transition'
+														>
+															<img
+															src={message.song.thumbnailUrl || "/default-song.jpg"}
+															alt={message.song.title}
+															className='w-12 h-12 rounded-md object-cover'
+															/>
+															<div className='flex-1'>
+															<p className='text-sm font-semibold'>{message.song.title}</p>
+															<p className='text-xs text-zinc-300'>{message.song.artist}</p>
+															</div>
+															<Play className='w-4 h-4 text-zinc-300' />
+														</div>
+													)}
+
+													<span className='text-xs text-zinc-300 mt-1 block'>
+														{formatTime(message.createdAt)}
+													</span>
+												</div>
+											</div>
+										);
+									})}
 									{/* Dòng này giúp tự scroll xuống khi có tin nhắn mới */}
 									<div ref={bottomRef} />
 								</div>

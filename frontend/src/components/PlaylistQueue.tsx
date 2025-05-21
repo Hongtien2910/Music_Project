@@ -60,11 +60,12 @@ const SortableSongRow = ({
   const { likeOrUnlikeSong, isSongLiked, fetchLikedSongs } = useMusicStore();
   const { currentUser } = useAuthStore();
 
-  useEffect(() => {
-    if (currentUser) {
-      fetchLikedSongs(currentUser._id);
-    }
-  }, [currentUser]);
+	useEffect(() => {
+		if (currentUser?._id) {
+			fetchLikedSongs(currentUser._id);
+		}
+	}, [currentUser]);
+  
   return (
     <div
       ref={setNodeRef}
@@ -112,8 +113,10 @@ const SortableSongRow = ({
       {/* Cột 3: Yêu thích */}
       <button
         onClick={(e) => {
-          e.stopPropagation(); // Ngăn lan truyền sự kiện
-          likeOrUnlikeSong(song._id, currentUser?._id ?? "");
+          e.stopPropagation();
+          likeOrUnlikeSong(song._id, currentUser?._id ?? "").then(() => {
+          fetchLikedSongs(currentUser?._id ?? "");
+          });
         }}
         className="dnd-cancel"
       >

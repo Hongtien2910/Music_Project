@@ -33,20 +33,29 @@ export const initializeSocket = (server) => {
 
 		socket.on("send_message", async (data) => {
 			try {
-				const { senderId, receiverId, content } = data;
+				const { senderId, receiverId, type = "text", content, song } = data;
 
-				const message = await Message.create({
-					senderId,
-					receiverId,
-					content,
-				});
+				const messageData = {
+				senderId,
+				receiverId,
+				type,
+				};
 
-				// send to receiver in realtime, if they're online
-				const receiverSocketId = userSockets.get(receiverId);
-				if (receiverSocketId) {
-					io.to(receiverSocketId).emit("receive_message", message);
+				if (type === "text") {
+				messageData.content = content;
+				} else if (type === "song") {
+				messageData.song = song; 
 				}
 
+				const message = await Message.create(messageData);
+
+				// Gửi cho người nhận nếu họ đang online
+				const receiverSocketId = userSockets.get(receiverId);
+				if (receiverSocketId) {
+				io.to(receiverSocketId).emit("receive_message", message);
+				}
+
+				// Xác nhận lại với người gửi
 				socket.emit("message_sent", message);
 			} catch (error) {
 				console.error("Message error:", error);

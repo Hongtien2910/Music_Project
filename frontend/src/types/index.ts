@@ -23,14 +23,6 @@ export interface Album {
     updatedAt: string;
 }
 
-export interface Message {
-	_id: string;
-	senderId: string;
-	receiverId: string;
-	content: string;
-	createdAt: string;
-	updatedAt: string;
-}
 
 export interface User {
 	_id: string;
@@ -46,11 +38,21 @@ export interface Stats {
 	totalArtists: number;
 }
 
+export interface SongPayload {
+	songId: string;
+	title: string;
+	artist: string;
+	thumbnailUrl: string;
+	audioUrl: string;
+}
+
 export interface Message {
 	_id: string;
 	senderId: string;
 	receiverId: string;
-	content: string;
+	type: "text" | "song";
+	content?: string;        
+	song?: SongPayload;        
 	createdAt: string;
 	updatedAt: string;
 }
