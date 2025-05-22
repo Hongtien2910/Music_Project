@@ -109,23 +109,27 @@ const SortableSongRow = ({
       </div>
 
       {/* Cột 3: Yêu thích */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          likeOrUnlikeSong(song._id, currentUser?._id ?? "").then(() => {
-            fetchLikedSongs(currentUser?._id ?? "");
-          });
-        }}
-        className="dnd-cancel"
-      >
-        <Heart
-          className={`w-4 h-4 ${
-            isSongLiked(song._id)
-              ? "text-red-500 fill-red-500"
-              : "text-zinc-400 hover:text-white"
-          }`}
-        />
-      </button>
+      {currentUser ? (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            likeOrUnlikeSong(song._id, currentUser._id).then(() => {
+              fetchLikedSongs(currentUser._id);
+            });
+          }}
+          className="dnd-cancel"
+        >
+          <Heart
+            className={`w-4 h-4 ${
+              isSongLiked(song._id)
+                ? "text-red-500 fill-red-500"
+                : "text-zinc-400 hover:text-white"
+            }`}
+          />
+        </button>
+      ) : (
+        <div />
+      )}
 
       {/* Cột 4: Duration + Info */}
       <div className="flex items-center justify-end gap-2 ">

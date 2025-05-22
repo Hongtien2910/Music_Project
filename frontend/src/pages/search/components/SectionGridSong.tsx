@@ -112,21 +112,26 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
                       </div>
                     </div>
 
+                    {currentUser ? (
                     <button
                       onClick={(e) => {
-                        e.stopPropagation();
-                        likeOrUnlikeSong(song._id, currentUser?._id ?? "");
+                      e.stopPropagation();
+                      likeOrUnlikeSong(song._id, currentUser?._id ?? "");
                       }}
+                      className="dnd-cancel"
                     >
                       <Heart
-                        className={`w-4 h-4 ${
-                          isSongLiked(song._id)
-                            ? "text-red-500 fill-red-500"
-                            : "text-zinc-400 hover:text-white"
-                        }`}
+                      className={`w-4 h-4 ${
+                        isSongLiked(song._id)
+                        ? "text-red-500 fill-red-500"
+                        : "text-zinc-400 hover:text-white"
+                      }`}
                       />
                     </button>
-
+                    ) : (
+                    <div className="w-4 h-4" />
+                    )}
+                    
                     <div className="flex items-center">{song.createdAt.split("T")[0]}</div>
 
                     <div className='flex items-center gap-2'>

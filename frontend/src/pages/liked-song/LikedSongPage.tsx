@@ -54,7 +54,7 @@ const LikedSongPage = () => {
 	if (isLoading) return null;
 
 	return (
-	<main className="rounded-md overflow-hidden bg-gradient-to-b from-zinc-800 to-zinc-900">
+	<main className="rounded-md overflow-hidden h-full bg-gradient-to-b from-zinc-800 to-zinc-900">
 		<Topbar />
 		<div className='h-full'>
 			<ScrollArea className='h-full rounded-md'>

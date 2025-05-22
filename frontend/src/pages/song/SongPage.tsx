@@ -196,17 +196,19 @@ const SongPage = () => {
 									<Button onClick={handlePlaySong} size="icon" className="w-14 h-14 rounded-full border border-white bg-customRed hover:bg-red-800 hover:scale-105 transition-all">
 										{isCurrentSongPlaying ? <Pause className="h-7 w-7 text-white fill-white" /> : <Play className="h-7 w-7 text-white fill-white" />}
 									</Button>
-
-									<button
-										onClick={(e) => {
-											e.stopPropagation();
-											likeOrUnlikeSong(currentSongM._id, currentUser?._id ?? "").then(() => {
-											fetchLikedSongs(currentUser?._id ?? "");
-											});
-										}}
-									>
-										<Heart className={`w-10 h-10 ${isSongLiked(currentSongM._id) ? "text-red-500 fill-red-500" : "text-zinc-400 hover:text-white"}`} />
-									</button>
+									
+									{currentUser && (
+										<button
+											onClick={(e) => {
+												e.stopPropagation();
+												likeOrUnlikeSong(currentSongM._id, currentUser._id).then(() => {
+													fetchLikedSongs(currentUser._id);
+												});
+											}}
+										>
+											<Heart className={`w-10 h-10 ${isSongLiked(currentSongM._id) ? "text-red-500 fill-red-500" : "text-zinc-400 hover:text-white"}`} />
+										</button>
+									)}
 
 									<button
 										onClick={(e) => {

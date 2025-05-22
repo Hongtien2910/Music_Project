@@ -15,7 +15,7 @@ router.get("/:songId", getSongById);
 router.post("/recommend", getRecommendedSongs);
 router.post("/recognize", recognizeSongFromAudio);
 router.patch('/:songId/incrementplays', incrementPlays);
-router.post('/:songId/like', likeSong);
-router.post('/:songId/unlike', unlikeSong);
+router.post('/:songId/like', protectRoute, likeSong);
+router.post('/:songId/unlike', protectRoute, unlikeSong);
 
 export default router;
