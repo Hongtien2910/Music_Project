@@ -5,6 +5,7 @@ import FeaturedSection from "./components/FeaturedSection";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import SectionGrid from "./components/SectionGrid";
 import SectionGridAlbum from "./components/SectionGridAlbum";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 const HomePage = () => {
 
@@ -17,12 +18,19 @@ const HomePage = () => {
         trendingSongs,
         randomAlbums} = useMusicStore();
 
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+
   useEffect(() => {
     fetchFeaturedSongs();
-    fetchMadeForYouSongs();
     fetchTrendingSongs();
     fetchRandomAlbums();
-  }, [fetchFeaturedSongs, fetchMadeForYouSongs, fetchTrendingSongs, fetchRandomAlbums]);
+
+    if (isAuthenticated) {
+      fetchMadeForYouSongs("/songs/made-for-you");
+    } else {
+      fetchMadeForYouSongs("/songs/made-for-you-public");
+    }
+  }, [isAuthenticated, fetchFeaturedSongs, fetchMadeForYouSongs, fetchTrendingSongs, fetchRandomAlbums]);
 
 
   return (

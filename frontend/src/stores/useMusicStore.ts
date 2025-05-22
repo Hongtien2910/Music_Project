@@ -20,7 +20,7 @@ interface MusicStore {
 	madeForYouSongs: Song[];
 	trendingSongs: Song[];
     fetchFeaturedSongs: () => Promise<void>;
-	fetchMadeForYouSongs: () => Promise<void>;
+	fetchMadeForYouSongs: (iendpoint: string) => Promise<void>;
 	fetchTrendingSongs: () => Promise<void>;
 
     stats: Stats;
@@ -132,16 +132,16 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 		}
 	},
 
-	fetchMadeForYouSongs: async () => {
-		set({ isLoading: true, error: null });
-		try {
-			const response = await axiosInstance.get("/songs/made-for-you");
-			set({ madeForYouSongs: response.data });
-		} catch (error: any) {
-			set({ error: error.response.data.message });
-		} finally {
-			set({ isLoading: false });
-		}
+	fetchMadeForYouSongs: async (endpoint: string) => {
+	set({ isLoading: true, error: null });
+	try {
+		const response = await axiosInstance.get(endpoint);
+		set({ madeForYouSongs: response.data });
+	} catch (error: any) {
+		set({ error: error.response?.data?.message || error.message || "Lỗi khi tải bài hát Made For You" });
+	} finally {
+		set({ isLoading: false });
+	}
 	},
 
 	fetchTrendingSongs: async () => {

@@ -42,29 +42,39 @@ export const getFeaturedSongs = async (req, res, next) => {
 };
 
 export const getMadeForYouSongs = async (req, res, next) => {
-    try {
-        const songs = await Song.aggregate([
-            {
-                $sample:{size:4}
-            },
-            {
-                $project: {
-                    _id: 1,
-                    title: 1,
-                    artist: 1,
-                    imageUrl: 1,
-                    audioUrl: 1,
-                    lyricUrl: 1,
-                    duration: 1,
-                }
-            }
-        ])
-        res.status(200).json(songs);
-    } catch (error) {
-        console.log("Error in getMadeForYouSongs", error);
-        next(error);
-    }
+  try {
+    // Tìm user theo clerkId từ req.user._id và populate likedSongs
+    const user = await User.findOne({ clerkId: req.user._id }).populate("likedSongs");
+    // Nếu user có bài hát yêu thích, trả về danh sách likedSongs
+    return res.status(200).json(user.likedSongs);
+  } catch (error) {
+    console.log("Error in getMadeForYouSongs", error);
+    next(error);
+  }
 };
+
+export const getRandomSongsForPublic = async (req, res, next) => {
+  try {
+    const songs = await Song.aggregate([
+      { $sample: { size: 4 } },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          artist: 1,
+          imageUrl: 1,
+          audioUrl: 1,
+          lyricUrl: 1,
+          duration: 1,
+        },
+      },
+    ]);
+    return res.status(200).json(songs);
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 export const getRecommendedSongs = async (req, res, next) => {
   try {
