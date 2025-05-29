@@ -6,12 +6,18 @@ import { Calendar, Music, Trash2 } from "lucide-react";
 import { useEffect } from "react";
 import EditAlbumDialog from "./EditAlbumDialog";
 
-const AlbumsTable = () => {
+const AlbumsTable = ({ searchQuery }: { searchQuery: string }) => {
 	const { albums, deleteAlbum, fetchAlbums } = useMusicStore();
 
 	useEffect(() => {
 		fetchAlbums();
 	}, [fetchAlbums]);
+
+	// Lọc theo tiêu đề hoặc nghệ sĩ
+	const filteredAlbums = albums.filter((album) =>
+		album.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+		album.artist.toLowerCase().includes(searchQuery.toLowerCase())
+	);
 
 	return (
 		<ScrollArea className="h-[500px] w-full rounded-md border">
@@ -23,11 +29,11 @@ const AlbumsTable = () => {
 						<TableHead>Artist</TableHead>
 						<TableHead>Release Year</TableHead>
 						<TableHead>Songs</TableHead>
-						<TableHead className='w-[60px] text-center'>Edit  /  Delete</TableHead>
+						<TableHead className='w-[60px] text-center'>Edit / Delete</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{albums.map((album) => (
+					{filteredAlbums.map((album) => (
 						<TableRow key={album._id} className='hover:bg-zinc-800/50'>
 							<TableCell>
 								<img src={album.imageUrl} alt={album.title} className='w-10 h-10 rounded object-cover' />
@@ -48,9 +54,7 @@ const AlbumsTable = () => {
 							</TableCell>
 							<TableCell className='text-right'>
 								<div className='flex gap-2 justify-end'>
-									{/* Nút chỉnh sửa album */}
 									<EditAlbumDialog album={album} />
-									{/* Nút xóa album */}
 									<Button
 										variant={"outline"}
 										className="text-sm flex items-center gap-2"
@@ -65,7 +69,6 @@ const AlbumsTable = () => {
 				</TableBody>
 			</Table>
 		</ScrollArea>
-
 	);
 };
 export default AlbumsTable;

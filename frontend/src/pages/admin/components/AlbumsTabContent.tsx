@@ -3,7 +3,7 @@ import { Library } from "lucide-react";
 import AlbumsTable from "./AlbumsTable";
 import AddAlbumDialog from "./AddAlbumDialog";
 
-const AlbumsTabContent = () => {
+const AlbumsTabContent = ({ searchQuery }: { searchQuery: string }) => {
 	return (
 		<Card>
 			<CardHeader>
@@ -20,7 +20,7 @@ const AlbumsTabContent = () => {
 			</CardHeader>
 
 			<CardContent>
-				<AlbumsTable />
+				<AlbumsTable searchQuery={searchQuery} />
 			</CardContent>
 		</Card>
 	);

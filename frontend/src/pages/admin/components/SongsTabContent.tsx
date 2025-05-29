@@ -3,8 +3,7 @@ import { Music } from "lucide-react";
 import SongsTable from "./SongsTable";
 import AddSongDialog from "./AddSongDialog";
 
-
-const SongsTabContent = () => {
+const SongsTabContent = ({ searchQuery }: { searchQuery: string }) => {
 	return (
 		<Card>
 			<CardHeader>
@@ -20,7 +19,7 @@ const SongsTabContent = () => {
 				</div>
 			</CardHeader>
 			<CardContent>
-				<SongsTable />
+				<SongsTable searchQuery={searchQuery} />
 			</CardContent>
 		</Card>
 	);
