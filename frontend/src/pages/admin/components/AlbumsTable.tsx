@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useMusicStore } from "@/stores/useMusicStore";
 import { Calendar, Music, Trash2 } from "lucide-react";
 import { useEffect } from "react";
+import EditAlbumDialog from "./EditAlbumDialog";
 
 const AlbumsTable = () => {
 	const { albums, deleteAlbum, fetchAlbums } = useMusicStore();
@@ -22,7 +23,7 @@ const AlbumsTable = () => {
 						<TableHead>Artist</TableHead>
 						<TableHead>Release Year</TableHead>
 						<TableHead>Songs</TableHead>
-						<TableHead className='text-right'>Actions</TableHead>
+						<TableHead className='w-[60px] text-center'>Edit  /  Delete</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -47,13 +48,15 @@ const AlbumsTable = () => {
 							</TableCell>
 							<TableCell className='text-right'>
 								<div className='flex gap-2 justify-end'>
+									{/* Nút chỉnh sửa album */}
+									<EditAlbumDialog album={album} />
+									{/* Nút xóa album */}
 									<Button
-										variant='ghost'
-										size='sm'
+										variant={"outline"}
+										className="text-sm flex items-center gap-2"
 										onClick={() => deleteAlbum(album._id)}
-										className='text-customRed hover:text-customRed/40 hover:bg-red-400/10'
 									>
-										<Trash2 className='h-4 w-4' />
+										<Trash2 size={16} className='text-customRed hover:text-customRed/40 hover:bg-red-400/10' />
 									</Button>
 								</div>
 							</TableCell>

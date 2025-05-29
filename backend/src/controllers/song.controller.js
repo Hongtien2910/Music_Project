@@ -43,10 +43,17 @@ export const getFeaturedSongs = async (req, res, next) => {
 
 export const getMadeForYouSongs = async (req, res, next) => {
   try {
-    // Tìm user theo clerkId từ req.user._id và populate likedSongs
     const user = await User.findOne({ clerkId: req.user._id }).populate("likedSongs");
-    // Nếu user có bài hát yêu thích, trả về danh sách likedSongs
-    return res.status(200).json(user.likedSongs);
+
+    if (!user || !user.likedSongs || user.likedSongs.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // Shuffle likedSongs và lấy 4 phần tử đầu
+    const shuffled = user.likedSongs.sort(() => 0.5 - Math.random());
+    const randomSongs = shuffled.slice(0, 4);
+
+    return res.status(200).json(randomSongs);
   } catch (error) {
     console.log("Error in getMadeForYouSongs", error);
     next(error);

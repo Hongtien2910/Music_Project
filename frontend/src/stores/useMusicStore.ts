@@ -44,6 +44,7 @@ interface MusicStore {
 	isSongLiked: (songId: string) => boolean;
 
 	updateSong: (id: string, updatedSongData: Partial<Song> | FormData) => Promise<void>;
+	updateAlbum: (id: string, updatedAlbumData: Partial<Album> | FormData) => Promise<void>;
 }
 
 export const useMusicStore = create<MusicStore>((set, get) => ({
@@ -337,6 +338,35 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 			console.error("Error in updateSong ", error);
 			toast.error("Failed to update song");
 			set({ error: error.response?.data?.message || error.message || "Update song error" });
+		} finally {
+			set({ isLoading: false });
+		}
+	},
+
+	updateAlbum: async (id: string, data: Partial<Album> | FormData) => {
+		set({ isLoading: true, error: null });
+		try {
+			const isFormData = data instanceof FormData;
+
+			const response = await axiosInstance.put(
+				`/admin/albums/${id}`,
+				data,
+				isFormData ? { headers: { "Content-Type": "multipart/form-data" } } : {}
+			);
+
+			set((state) => ({
+				albums: state.albums.map((album) =>
+					album._id === id ? { ...album, ...response.data } : album
+				),
+			}));
+
+			await get().fetchStats();
+
+			toast.success("Album updated successfully");
+		} catch (error: any) {
+			console.error("Error in updateAlbum", error);
+			toast.error("Failed to update album");
+			set({ error: error.response?.data?.message || error.message || "Update album error" });
 		} finally {
 			set({ isLoading: false });
 		}

@@ -173,3 +173,33 @@ export const updateSong = async (req, res, next) => {
 		next(error);
 	}
 };
+
+export const updateAlbum = async (req, res, next) => {
+	try {
+		const { id } = req.params;
+		const { title, artist, releaseYear } = req.body;
+
+		const album = await Album.findById(id);
+		if (!album) {
+			return res.status(404).json({ message: "Album not found" });
+		}
+
+		// Nếu có file mới, upload và thay thế ảnh album
+		if (req.files && req.files.imageFile) {
+			const imageUrl = await uploadToCloudinary(req.files.imageFile);
+			album.imageUrl = imageUrl;
+		}
+
+		// Cập nhật các trường thông tin
+		album.title = title || album.title;
+		album.artist = artist || album.artist;
+		album.releaseYear = releaseYear || album.releaseYear;
+
+		await album.save();
+
+		res.status(200).json(album);
+	} catch (error) {
+		console.log("Error in updateAlbum", error);
+		next(error);
+	}
+};
