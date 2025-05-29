@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMusicStore } from "@/stores/useMusicStore";
 import { Calendar, Trash2 } from "lucide-react";
+import EditSongDialog from "./EditSongDialog";
 
 const SongsTable = () => {
 	const { songs, isLoading, error, deleteSong } = useMusicStore();
@@ -32,7 +33,7 @@ const SongsTable = () => {
 						<TableHead>Title</TableHead>
 						<TableHead>Artist</TableHead>
 						<TableHead>Release Date</TableHead>
-						<TableHead className='text-right'>Actions</TableHead>
+						<TableHead className='w-[60px] text-center'>Edit  /  Delete</TableHead>
 					</TableRow>
 				</TableHeader>
 
@@ -53,13 +54,21 @@ const SongsTable = () => {
 								</TableCell>
 								<TableCell className='text-right'>
 									<div className='flex gap-2 justify-end'>
+										{/* Nút chỉnh sửa */}
+										<EditSongDialog
+											song={{
+												...song,
+												albumId: song.albumId ?? undefined,
+											}}
+										/>
+										{/* Nút xóa */}
+
 										<Button
-											variant={"ghost"}
-											size={"sm"}
-											className='text-customRed hover:text-customRed/40 hover:bg-red-400/10'
+											variant={"outline"}
+											className="text-sm flex items-center gap-2"
 											onClick={() => deleteSong(song._id)}
 										>
-											<Trash2 className='size-4' />
+											<Trash2 size={16} className='text-customRed hover:text-customRed/40 hover:bg-red-400/10' />
 										</Button>
 									</div>
 								</TableCell>

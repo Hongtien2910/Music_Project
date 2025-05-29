@@ -118,3 +118,58 @@ export const deleteAlbum = async (req, res, next) => {
 export const checkAdmin = async (req, res, next) => {
     res.status(200).json({ admin: true });
 };
+
+export const updateSong = async (req, res, next) => {
+	try {
+		const { id } = req.params;
+		const { title, artist, albumId, duration } = req.body;
+
+		const song = await Song.findById(id);
+		if (!song) {
+			return res.status(404).json({ message: "Song not found" });
+		}
+
+		// Nếu có file mới, upload và thay thế
+		if (req.files) {
+			if (req.files.audioFile) {
+				const audioUrl = await uploadToCloudinary(req.files.audioFile);
+				song.audioUrl = audioUrl;
+			}
+			if (req.files.imageFile) {
+				const imageUrl = await uploadToCloudinary(req.files.imageFile);
+				song.imageUrl = imageUrl;
+			}
+			if (req.files.lyricFile) {
+				const lyricUrl = await uploadToCloudinary(req.files.lyricFile);
+				song.lyricUrl = lyricUrl;
+			}
+		}
+
+		// Cập nhật thông tin cơ bản
+		song.title = title || song.title;
+		song.artist = artist || song.artist;
+		song.duration = duration || song.duration;
+
+		// Nếu album thay đổi, cập nhật cả album cũ và mới
+		if (albumId && albumId !== song.albumId?.toString()) {
+			// Xoá khỏi album cũ
+			if (song.albumId) {
+				await Album.findByIdAndUpdate(song.albumId, {
+					$pull: { songs: song._id },
+				});
+			}
+			// Thêm vào album mới
+			await Album.findByIdAndUpdate(albumId, {
+				$push: { songs: song._id },
+			});
+			song.albumId = albumId;
+		}
+
+		await song.save();
+
+		res.status(200).json(song);
+	} catch (error) {
+		console.log("Error in updateSong", error);
+		next(error);
+	}
+};

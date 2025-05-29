@@ -15,6 +15,7 @@ import { useMusicStore } from "@/stores/useMusicStore";
 import { Plus, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";  // <-- chỉ thêm import này
 
 interface NewSong {
 	title: string;
@@ -119,20 +120,20 @@ const AddSongDialog = () => {
 				</Button>
 			</DialogTrigger>
 
-			<DialogContent className='bg-zinc-900 border-zinc-700 max-h-[80vh] overflow-auto'>
+			<DialogContent className='bg-zinc-900 border-zinc-700 max-h-[80vh]'>
 				<DialogHeader>
 					<DialogTitle>Add New Song</DialogTitle>
 					<DialogDescription>Add a new song to your music library</DialogDescription>
 				</DialogHeader>
 
-				<div className='space-y-4 py-4'>
-				<input
-					type='file'
-					accept='audio/*'
-					ref={audioInputRef}
-					hidden
-					onChange={handleAudioChange}
-				/>
+				<ScrollArea className="max-h-[60vh] py-4 space-y-4">
+					<input
+						type='file'
+						accept='audio/*'
+						ref={audioInputRef}
+						hidden
+						onChange={handleAudioChange}
+					/>
 
 
 					<input
@@ -245,7 +246,7 @@ const AddSongDialog = () => {
 							</SelectContent>
 						</Select>
 					</div>
-				</div>
+				</ScrollArea>
 
 				<DialogFooter>
 					<Button variant='outline' onClick={() => setSongDialogOpen(false)} disabled={isLoading}>

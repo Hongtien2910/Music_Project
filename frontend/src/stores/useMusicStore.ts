@@ -42,6 +42,8 @@ interface MusicStore {
 	fetchLikedSongs: (userId: string) => Promise<void>;
 	likeOrUnlikeSong: (songId: string, userId: string) => Promise<void>;
 	isSongLiked: (songId: string) => boolean;
+
+	updateSong: (id: string, updatedSongData: Partial<Song> | FormData) => Promise<void>;
 }
 
 export const useMusicStore = create<MusicStore>((set, get) => ({
@@ -309,6 +311,35 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
 
 	isSongLiked: (songId: string) => {
 		return get().likedSongs.some((s) => s._id === songId);
+	},
+
+	updateSong: async (id, data: Record<string, any> | FormData) => {
+		set({ isLoading: true, error: null });
+		try {
+			const isFormData = data instanceof FormData;
+
+			const response = await axiosInstance.put(
+				`/admin/songs/${id}`,
+				data,
+				isFormData ? { headers: { "Content-Type": "multipart/form-data" } } : {}
+			);
+
+			set((state) => ({
+				songs: state.songs.map((song) =>
+					song._id === id ? { ...song, ...response.data } : song
+				),
+			}));
+
+			await get().fetchStats();
+
+			toast.success("Song updated successfully");
+		} catch (error: any) {
+			console.error("Error in updateSong ", error);
+			toast.error("Failed to update song");
+			set({ error: error.response?.data?.message || error.message || "Update song error" });
+		} finally {
+			set({ isLoading: false });
+		}
 	},
 
 }));
