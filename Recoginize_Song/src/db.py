@@ -124,3 +124,20 @@ class SQLiteDatabase():
     return self.findOne({
       "id": id
     })
+
+  def delete_fingerprints_by_song_id(self, song_id):
+      """Xóa tất cả fingerprints của bài hát theo song_id."""
+      query = "DELETE FROM fingerprints WHERE song_fk = ?"
+      self.cur.execute(query, (song_id,))
+      self.conn.commit()
+
+  def delete_song_by_id(self, song_id):
+      """Xóa bài hát khỏi bảng songs theo id."""
+      query = "DELETE FROM songs WHERE id = ?"
+      self.cur.execute(query, (song_id,))
+      self.conn.commit()
+
+  def get_song_by_name(self, name):
+      """Tìm bài hát theo tên."""
+      query = "SELECT * FROM songs WHERE name = ?"
+      return self.executeOne(query, (name,))

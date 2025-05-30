@@ -79,5 +79,27 @@ def create():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/delete', methods=['DELETE'])
+def delete_song_feature():
+    try:
+        song_name = request.args.get('song_name')
+        if not song_name:
+            return jsonify({'error': 'Thiếu tên bài hát'}), 400
+
+        if song_name not in features_dict:
+            return jsonify({'message': 'Không tìm thấy bài hát trong dữ liệu gợi ý'}), 404
+
+        del features_dict[song_name]
+
+        # Cập nhật lại file feature
+        with open(FEATURE_FILE, "wb") as f:
+            import pickle
+            pickle.dump(features_dict, f)
+
+        return jsonify({'message': f'Đã xóa feature vector của bài hát "{song_name}" thành công'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)

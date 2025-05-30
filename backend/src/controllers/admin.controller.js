@@ -36,29 +36,41 @@ export const createSong = async (req, res, next) => {
     const imageUrl = await uploadToCloudinary(imageFile);
     const lyricUrl = lyricFile ? await uploadToCloudinary(lyricFile) : null;
 
-    // 2. Tạo file tạm với tên bài hát trong thư mục temp hợp lệ
+    // 2. Tạo file tạm từ audioFile trong thư mục tạm
     const os = await import("os");
     const tmpDir = os.tmpdir();
     const tmpPath = path.join(tmpDir, `${title}.mp3`);
 
     fs.copyFileSync(audioFile.tempFilePath, tmpPath);
 
-    // 3. Gửi file tạm và tên bài hát sang Flask
-    const form = new FormData();
-    form.append("file", fs.createReadStream(tmpPath), {
+    // 3. Gửi file tạm và tên bài hát đến Flask server gợi ý (port 5000)
+    const form1 = new FormData();
+    form1.append("file", fs.createReadStream(tmpPath), {
       filename: `${title}.mp3`,
       contentType: audioFile.mimetype,
     });
-    form.append("song_name", title);
+    form1.append("song_name", title);
 
-    await axios.post("http://127.0.0.1:5000/create", form, {
-      headers: form.getHeaders(),
+    await axios.post("http://127.0.0.1:5000/create", form1, {
+      headers: form1.getHeaders(),
     });
 
-    // 4. Xóa file tạm
+    // 4. Gửi file tạm và tên bài hát đến Flask server nhận diện (port 5001)
+    const form2 = new FormData();
+    form2.append("file", fs.createReadStream(tmpPath), {
+      filename: `${title}.mp3`,
+      contentType: audioFile.mimetype,
+    });
+    form2.append("song_name", title);
+
+    await axios.post("http://127.0.0.1:5001/songs", form2, {
+      headers: form2.getHeaders(),
+    });
+
+    // 5. Xóa file tạm
     fs.unlinkSync(tmpPath);
 
-    // 5. Lưu bài hát vào MongoDB
+    // 6. Lưu bài hát vào MongoDB
     const song = new Song({
       title,
       artist,
@@ -89,15 +101,38 @@ export const deleteSong = async (req, res, next) => {
         const { id } = req.params;
         const song = await Song.findById(id);
 
+        if (!song) {
+            return res.status(404).json({ message: "Song not found" });
+        }
+
+        // Xóa khỏi album nếu có
         if (song.albumId) {
             await Album.findByIdAndUpdate(song.albumId, {
                 $pull: { songs: song._id },
             });
         }
-        await Song.findByIdAndDelete(id);
-        if (!song) {
-            return res.status(404).json({ message: "Song not found" });
+
+        // Xóa fingerprint bên Flask
+        try {
+            await axios.delete("http://127.0.0.1:5001/delete", {
+                params: { song_name: song.title + ".mp3" },
+            });
+        } catch (flaskErr) {
+            console.error("Failed to delete fingerprint in Flask:", flaskErr.response?.data || flaskErr.message);
         }
+
+        // Xóa feature vector bên Flask recommend
+        try {
+            await axios.delete("http://127.0.0.1:5000/delete", {
+                params: { song_name: song.title },
+            });
+        } catch (recommendErr) {
+            console.error("Failed to delete recommend feature in Flask:", recommendErr.response?.data || recommendErr.message);
+        }
+
+        // Xóa trong MongoDB
+        await Song.findByIdAndDelete(id);
+
         res.status(200).json({ message: "Song deleted successfully" });
     } catch (error) {
         console.log("Error in delete Song", error);
