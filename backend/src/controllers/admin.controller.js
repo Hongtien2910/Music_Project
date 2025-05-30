@@ -1,7 +1,12 @@
 import {Song} from "../models/song.model.js";
 import {Album} from "../models/album.model.js";
-
+import axios from "axios";
+import FormData from "form-data";
+import fs from "fs";
+import path from "path";
+import os from 'os';
 import cloudinary from "../lib/cloudinary.js";
+
 const uploadToCloudinary = async (file) => {
     try {
         const result = await cloudinary.uploader.upload(file.tempFilePath, {
@@ -16,43 +21,67 @@ const uploadToCloudinary = async (file) => {
 
 
 export const createSong = async (req, res, next) => {
-    try {
-        if (!req.files || !req.files.audioFile || !req.files.imageFile) {  
-            return res.status(400).json({ message: "Please upload all files" });
-        }
-
-        const { title, artist, albumId, duration } = req.body;
-        const audioFile = req.files.audioFile;
-        const imageFile = req.files.imageFile;
-        const lyricFile = req.files.lyricFile;
-
-        const audioUrl = await uploadToCloudinary(audioFile);
-        const imageUrl = await uploadToCloudinary(imageFile);   
-        const lyricUrl = await uploadToCloudinary(lyricFile);
-
-        const song = new Song({
-            title,
-            artist,
-            audioUrl,
-            imageUrl,
-            lyricUrl,
-            duration,
-            albumId
-        })
-
-        await song.save();
-
-        // if song belong to album, update album song array
-        if (albumId){
-            await Album.findByIdAndUpdate(albumId, {
-                $push: { songs: song._id},
-            });
-        }
-        res.status(201).json(song)
-    } catch (error) {
-        console.log("Error in create Song", error);
-        next(error);
+  try {
+    if (!req.files || !req.files.audioFile || !req.files.imageFile) {
+      return res.status(400).json({ message: "Please upload all files" });
     }
+
+    const { title, artist, albumId, duration } = req.body;
+    const audioFile = req.files.audioFile;
+    const imageFile = req.files.imageFile;
+    const lyricFile = req.files.lyricFile;
+
+    // 1. Upload audio, image, lyric lên Cloudinary
+    const audioUrl = await uploadToCloudinary(audioFile);
+    const imageUrl = await uploadToCloudinary(imageFile);
+    const lyricUrl = lyricFile ? await uploadToCloudinary(lyricFile) : null;
+
+    // 2. Tạo file tạm với tên bài hát trong thư mục temp hợp lệ
+    const os = await import("os");
+    const tmpDir = os.tmpdir();
+    const tmpPath = path.join(tmpDir, `${title}.mp3`);
+
+    fs.copyFileSync(audioFile.tempFilePath, tmpPath);
+
+    // 3. Gửi file tạm và tên bài hát sang Flask
+    const form = new FormData();
+    form.append("file", fs.createReadStream(tmpPath), {
+      filename: `${title}.mp3`,
+      contentType: audioFile.mimetype,
+    });
+    form.append("song_name", title);
+
+    await axios.post("http://127.0.0.1:5000/create", form, {
+      headers: form.getHeaders(),
+    });
+
+    // 4. Xóa file tạm
+    fs.unlinkSync(tmpPath);
+
+    // 5. Lưu bài hát vào MongoDB
+    const song = new Song({
+      title,
+      artist,
+      audioUrl,
+      imageUrl,
+      lyricUrl,
+      duration,
+      albumId,
+    });
+
+    await song.save();
+
+    if (albumId) {
+      await Album.findByIdAndUpdate(albumId, {
+        $push: { songs: song._id },
+      });
+    }
+
+    res.status(201).json(song);
+  } catch (error) {
+    console.error("Error in create Song", error);
+    next(error);
+  }
 };
 
 export const deleteSong = async (req, res, next) => {
