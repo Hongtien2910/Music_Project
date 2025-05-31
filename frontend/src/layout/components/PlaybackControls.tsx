@@ -118,7 +118,7 @@ export const PlaybackControls = () => {
 						<Button
 							size='icon'
 							variant='ghost'
-							className={`hidden sm:inline-flex hover:text-white ${shuffle ? "text-white" : "text-zinc-400"}`}
+							className={`hidden sm:inline-flex hover:text-white ${shuffle ? "text-customRed" : "text-zinc-400"}`}
 							onClick={handleToggleShuffle}
 							disabled={repeatMode === "one"} // Disable if repeat one
 						>
@@ -157,7 +157,7 @@ export const PlaybackControls = () => {
 						<Button
 							size='icon'
 							variant='ghost'
-							className={`hidden sm:inline-flex hover:text-white ${repeatMode !== "off" ? "text-white" : "text-zinc-400"}`}
+							className={`hidden sm:inline-flex hover:text-white ${repeatMode !== "off" ? "text-customRed" : "text-zinc-400"}`}
 							onClick={handleChangeRepeatMode}
 						>
 							{repeatMode === "one" ? (

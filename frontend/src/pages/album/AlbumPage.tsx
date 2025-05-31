@@ -141,7 +141,7 @@ const AlbumPage = () => {
 							{/* songs list */}
 
 							<div className='px-6'>
-								<ScrollArea className="h-[310px] rounded-md">
+								<ScrollArea className="h-[400px] rounded-md">
 								<div className='space-y-2 py-4'>
 									{currentAlbum?.songs.map((song, index) => {
 										const isCurrentSong = currentSong?._id === song._id;
