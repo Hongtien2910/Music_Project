@@ -7,22 +7,18 @@ import SectionGridSong from "./components/SectionGridSong";
 import SectionGridAlbum from "./components/SectionGridAlbum";
 import MicrophoneIndicator from "./components/MicrophoneIndicator";
 
-// @ts-ignore
-import Recorder from "recorder-js";
-
 const SearchPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [hasSearchedByAudio, setHasSearchedByAudio] = useState(false);
-  const [isAudioLoading, setIsAudioLoading] = useState(false); // loading riêng cho audio
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
 
-  const fetchSongs = useMusicStore(state => state.fetchSongs);
-  const fetchAlbums = useMusicStore(state => state.fetchAlbums);
+  const fetchSongs = useMusicStore((state) => state.fetchSongs);
+  const fetchAlbums = useMusicStore((state) => state.fetchAlbums);
 
-  // Khai báo ref cho AudioContext, Recorder, MediaStream và Timeout ID
-  const audioContext = useRef<AudioContext | null>(null);
-  const recorder = useRef<Recorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const timeoutId = useRef<number | null>(null);
 
   useEffect(() => {
@@ -36,18 +32,11 @@ const SearchPage = () => {
     }
   }, [keyword]);
 
-  // Cleanup khi component unmount hoặc khi bắt đầu ghi âm mới
   useEffect(() => {
     return () => {
-      if (timeoutId.current) {
-        clearTimeout(timeoutId.current);
-      }
+      if (timeoutId.current) clearTimeout(timeoutId.current);
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-      if (audioContext.current) {
-        audioContext.current.close();
-        audioContext.current = null;
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
@@ -77,62 +66,57 @@ const SearchPage = () => {
     : [];
 
   const handleAudioSearch = async () => {
-    if (!navigator.mediaDevices) {
-      alert("The browser does not support recording");
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      alert("Your browser does not support audio recording.");
       return;
     }
 
     try {
-      if (!audioContext.current) {
-        const AudioCtxClass = (window.AudioContext || (window as any).webkitAudioContext);
-        audioContext.current = new AudioCtxClass();
-      }
-
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      // Khởi tạo Recorder với AudioContext
-      recorder.current = new Recorder(audioContext.current);
+      audioChunksRef.current = [];
 
-      await audioContext.current.resume();
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
 
-      // Kết nối stream tới recorder
-      await recorder.current.init(stream);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
 
-      // Bắt đầu ghi
-      recorder.current.start();
-      setIsRecording(true);
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+        const audioFile = new File([audioBlob], "recording.wav", { type: "audio/wav" });
 
-      // Sau khi ghi 10s, dừng và gửi lên
-      timeoutId.current = window.setTimeout(async () => {
+        setIsRecording(false);
+        setIsAudioLoading(true);
+
         try {
-          if (!recorder.current) return;
-          setIsAudioLoading(true);
-
-          const { blob } = await recorder.current.stop();
-          setIsRecording(false);
-
-          // Tạo file WAV
-          const wavFile = new File([blob], "recording.wav", { type: "audio/wav" });
-
-          // Gọi hàm gửi file lên backend
-          await searchByAudio(wavFile);
-
+          await searchByAudio(audioFile);
           setHasSearchedByAudio(true);
         } catch (error) {
-          console.error("Error during audio processing:", error);
-          alert("There was an error processing the audio.");
+          console.error("Error uploading recorded audio:", error);
+          alert("There was an error processing the recorded audio.");
         } finally {
           setIsAudioLoading(false);
           if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current.getTracks().forEach((track) => track.stop());
             streamRef.current = null;
           }
         }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+
+      timeoutId.current = window.setTimeout(() => {
+        mediaRecorder.stop();
       }, 10000);
     } catch (err) {
       console.error("Error accessing microphone:", err);
-      alert("Microphone cannot be accessed. Please check your access rights.");
+      alert("Microphone cannot be accessed.");
       setIsRecording(false);
     }
   };
@@ -158,7 +142,6 @@ const SearchPage = () => {
     }
   };
 
-  // Hiển thị kết quả nếu có keyword hoặc tìm bằng audio
   const shouldShowResults = keyword.trim() !== "" || hasSearchedByAudio;
 
   return (
@@ -166,7 +149,6 @@ const SearchPage = () => {
       <Topbar />
       <ScrollArea className="h-[calc(100vh-180px)]">
         <div className="p-4 sm:p-6">
-          {/* Header + Search input + Mic button + Upload */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
             <h1 className="text-2xl sm:text-3xl font-bold">Search</h1>
             <div className="flex gap-2 items-center">
@@ -179,7 +161,6 @@ const SearchPage = () => {
                 disabled={isRecording || isAudioLoading}
               />
 
-              {/* Mic button */}
               <button
                 className={`text-white p-2 rounded-full ${
                   isRecording ? "bg-zinc-700 hover:bg-zinc-600" : "bg-customRed hover:bg-red-800"
@@ -191,7 +172,6 @@ const SearchPage = () => {
                 {isRecording ? <FaMicrophoneSlash /> : <FaMicrophone />}
               </button>
 
-              {/* Upload button */}
               <label
                 htmlFor="file-upload"
                 className={`cursor-pointer text-white p-2 rounded-full bg-customRed hover:bg-red-800 transition ${
@@ -212,17 +192,14 @@ const SearchPage = () => {
             </div>
           </div>
 
-          {/* Indicator khi đang ghi âm */}
           {isRecording && <MicrophoneIndicator />}
 
-          {/* Loading spinner riêng cho audio */}
           {isAudioLoading && (
             <div className="flex justify-center mt-6">
               <div className="w-8 h-8 border-4 border-white border-t-customRed rounded-full animate-spin" />
             </div>
           )}
 
-          {/* Search results */}
           {shouldShowResults && (
             <div className="space-y-8">
               {keyword.trim() !== "" && (

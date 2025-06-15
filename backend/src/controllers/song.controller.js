@@ -175,6 +175,10 @@ export const recognizeSongFromAudio = async (req, res) => {
       duration: mongoSong.duration,
     });
   } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return res.status(404).json({ message: "Không tìm thấy bài hát phù hợp trong hệ thống nhận diện" });
+    }
+
     console.error("Error in recognizeSongFromAudio:", error);
     return res.status(500).json({ message: "Lỗi server nội bộ", error: error.message });
   }

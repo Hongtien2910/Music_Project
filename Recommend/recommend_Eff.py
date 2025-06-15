@@ -10,19 +10,18 @@ from efficientnet_pytorch import EfficientNet
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Chuyển ảnh grayscale thành 3 kênh cho EfficientNet (nếu muốn nâng cấp sau)
-class CustomEfficientNet(nn.Module):
-    def __init__(self, model):
-        super(CustomEfficientNet, self).__init__()
-        self.model = model
+class EfficientNetFeatureExtractor(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.backbone = EfficientNet.from_pretrained('efficientnet-b0')
+        self.backbone._fc = nn.Identity()  # Bỏ layer phân loại cuối
 
     def forward(self, x):
-        x = x.repeat(1, 3, 1, 1)  # Convert 1-channel grayscale → 3-channel
-        return self.model(x)
+        x = x.repeat(1, 3, 1, 1)  # grayscale → RGB
+        return self.backbone(x)  # Trả về vector đặc trưng (1280 chiều)
 
-# Khởi tạo model
 def build_model():
-    base_model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=8)
-    return CustomEfficientNet(base_model).to(device)
+    return EfficientNetFeatureExtractor().to(device)
 
 # Load dữ liệu spectrogram
 def load_data():
