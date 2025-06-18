@@ -20,7 +20,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { checkAdminStatus, checkSignedIn } = useAuthStore();
   const { initSocket, disconnectSocket } = useChatStore();
 
-  // Khởi tạo và kiểm tra auth ban đầu
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -46,23 +45,20 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [getToken, userId, checkAdminStatus, checkSignedIn, initSocket, disconnectSocket]);
 
-  // Tự động refresh token mỗi 1 phút
   useEffect(() => {
     const intervalId = setInterval(async () => {
       try {
-        // Không truyền { refresh: true }
         const token = await getToken();
         updateApiToken(token);
       } catch (error) {
         console.error("Error refreshing token:", error);
         updateApiToken(null);
       }
-    }, 60 * 1000); // 1 phút
+    }, 50 * 1000);
 
     return () => clearInterval(intervalId);
   }, [getToken]);
 
-  // Cập nhật token mỗi khi session thay đổi
   useEffect(() => {
     if (!session) {
       updateApiToken(null);
