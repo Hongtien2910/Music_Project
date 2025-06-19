@@ -2,8 +2,8 @@ import os
 import re
 import torch
 import torch.nn as nn
-import numpy as np 
-import cv2 
+import numpy as np
+import cv2
 import pickle
 from collections import defaultdict
 
@@ -15,8 +15,7 @@ def conv(ni, nf, ks=3, stride=1, bias=False):
 def conv_layer(ni, nf, ks=3, stride=1, act=True):
     bn = nn.BatchNorm2d(nf)
     layers = [conv(ni, nf, ks, stride=stride), bn]
-    act_fn = nn.ReLU(inplace=True)
-    if act: layers.append(act_fn)
+    if act: layers.append(nn.ReLU(inplace=True))
     return nn.Sequential(*layers)
 
 class ResBlock(nn.Module):
@@ -28,8 +27,10 @@ class ResBlock(nn.Module):
         return x + self.conv2(self.conv1(x))
 
 def conv_layer_averpl(ni, nf):
-    aver_pl = nn.AvgPool2d(kernel_size=2, stride=2)
-    return nn.Sequential(conv_layer(ni, nf), aver_pl)
+    return nn.Sequential(
+        conv_layer(ni, nf),
+        nn.AvgPool2d(kernel_size=2, stride=2)
+    )
 
 def build_model():
     return nn.Sequential(
@@ -48,6 +49,12 @@ def build_model():
         nn.Linear(2048, 40),
         nn.Linear(40, 8)
     )
+
+# ========== Cắt model để lấy đặc trưng ==========
+
+def get_feature_extractor(full_model):
+    # Bỏ lớp cuối cùng Linear(40 → 8), chỉ giữ đến Linear(2048 → 40)
+    return nn.Sequential(*list(full_model.children())[:-1])
 
 # ========== Load dữ liệu ảnh ==========
 
@@ -88,6 +95,8 @@ def save_feature_vectors(images_by_label, feature_model, output_file="features.p
         pickle.dump(features, f)
     print(f"✅ Đã lưu {len(features)} vector đặc trưng vào {output_file}")
 
+# ========== Load vector đặc trưng đã lưu ==========
+
 def load_feature_vectors(feature_file="features.pkl"):
     with open(feature_file, "rb") as f:
         features = pickle.load(f)
@@ -121,7 +130,12 @@ def recommend_songs(song_name, features_dict):
     top_values = topk.values.numpy()
 
     list_song = []
-    list_song.append({'id': 1, 'name': song_name, 'link': f'templates/music/{song_name}.mp3', 'genre': 'Original Song'})
+    list_song.append({
+        'id': 1,
+        'name': song_name,
+        'link': f'templates/music/{song_name}.mp3',
+        'genre': 'Original Song'
+    })
 
     for i, idx in enumerate(top_indices):
         name = predictions_label[idx]
