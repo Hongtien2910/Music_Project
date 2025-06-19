@@ -1,82 +1,33 @@
-import { axiosInstance } from "@/lib/axios";
+import { useAuth } from "@clerk/clerk-react";
+import { useEffect, useState } from "react";
+import { createAuthenticatedAxios } from "@/lib/authenticatedAxios";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useChatStore } from "@/stores/useChatStore";
-import { useAuth, useSession } from "@clerk/clerk-react";
 import { Loader } from "lucide-react";
-import { useEffect, useState } from "react";
-
-const updateApiToken = (token: string | null) => {
-  if (token) {
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  } else {
-    delete axiosInstance.defaults.headers.common['Authorization'];
-  }
-};
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { getToken, userId } = useAuth();
-  const { session } = useSession();
   const [loading, setLoading] = useState(true);
   const { checkAdminStatus, checkSignedIn } = useAuthStore();
   const { initSocket, disconnectSocket } = useChatStore();
 
   useEffect(() => {
     const initAuth = async () => {
+      const axios = createAuthenticatedAxios(getToken);
       try {
-        const token = await getToken();
-        updateApiToken(token);
-        if (token) {
-          await checkAdminStatus();
-          await checkSignedIn();
-          if (userId) initSocket(userId);
-        }
+        await checkAdminStatus(axios);
+        await checkSignedIn(axios);
+        if (userId) initSocket(userId);
       } catch (error) {
-        updateApiToken(null);
-        console.error("Error initializing auth:", error);
+        console.error("Lỗi xác thực:", error);
       } finally {
         setLoading(false);
       }
     };
 
     initAuth();
-
-    return () => {
-      disconnectSocket();
-    };
+    return () => disconnectSocket();
   }, [getToken, userId, checkAdminStatus, checkSignedIn, initSocket, disconnectSocket]);
-
-  useEffect(() => {
-    const intervalId = setInterval(async () => {
-      try {
-        const token = await getToken();
-        updateApiToken(token);
-      } catch (error) {
-        console.error("Error refreshing token:", error);
-        updateApiToken(null);
-      }
-    }, 50 * 1000);
-
-    return () => clearInterval(intervalId);
-  }, [getToken]);
-
-  useEffect(() => {
-    if (!session) {
-      updateApiToken(null);
-      return;
-    }
-
-    const refreshToken = async () => {
-      try {
-        const token = await getToken();
-        updateApiToken(token);
-      } catch (error) {
-        console.error("Error refreshing token on session change:", error);
-        updateApiToken(null);
-      }
-    };
-
-    refreshToken();
-  }, [session, getToken]);
 
   if (loading) {
     return (

@@ -1,6 +1,6 @@
-import { axiosInstance } from "@/lib/axios";
 import { create } from "zustand";
 import { User } from "@/types";
+import type { AxiosInstance } from "axios";
 
 interface AuthStore {
 	isAdmin: boolean;
@@ -9,8 +9,8 @@ interface AuthStore {
 	error: string | null;
 	currentUser: User | null;
 
-	checkAdminStatus: () => Promise<void>;
-	checkSignedIn: () => Promise<void>;
+	checkAdminStatus: (axios: AxiosInstance) => Promise<void>;
+	checkSignedIn: (axios: AxiosInstance) => Promise<void>;
 	reset: () => void;
 }
 
@@ -21,22 +21,22 @@ export const useAuthStore = create<AuthStore>((set) => ({
 	error: null,
 	currentUser: null,
 
-	checkAdminStatus: async () => {
+	checkAdminStatus: async (axios) => {
 		set({ isLoading: true, error: null });
 		try {
-			const response = await axiosInstance.get("/admin/check");
+			const response = await axios.get("/admin/check");
 			set({ isAdmin: response.data.admin });
 		} catch (error: any) {
-			set({ isAdmin: false, error: error.response.data.message });
+			set({ isAdmin: false, error: error.response?.data?.message || "Lỗi xác thực admin" });
 		} finally {
 			set({ isLoading: false });
 		}
 	},
 
-	checkSignedIn: async () => {
+	checkSignedIn: async (axios) => {
 		set({ isLoading: true, error: null });
 		try {
-			const response = await axiosInstance.get("/auth/status");
+			const response = await axios.get("/auth/status");
 			set({ 
 				isAuthenticated: response.data.authenticated,
 				currentUser: response.data.user || null,
@@ -52,8 +52,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
 		}
 	},
 
-
 	reset: () => {
-		set({ isAdmin: false, isAuthenticated:false, currentUser: null, isLoading: false, error: null });
+		set({ 
+			isAdmin: false, 
+			isAuthenticated: false, 
+			currentUser: null, 
+			isLoading: false, 
+			error: null 
+		});
 	},
 }));
